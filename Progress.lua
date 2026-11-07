@@ -186,7 +186,7 @@ function UI.CreateSoulShards()
         holder.segments[i] = segment
     end
     local function refresh()
-        local spec = UI.GetSpecialization()
+        local spec = C_SpecializationInfo.GetSpecialization()
         local partial = UI.Public(spec) and spec == (SPEC_WARLOCK_DESTRUCTION or 3)
         local step = 1
         if partial then

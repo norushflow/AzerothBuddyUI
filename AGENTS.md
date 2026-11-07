@@ -1,8 +1,8 @@
 # AzerothBuddyUI
 
-AzerothBuddyUI ist ein eigenständiges WoW-Addon für Forever. UI-Layout mit Minimap, nativem Blizzard-Tracking, Kalender, Aktionsleisten, Chat und Unitframes.
+AzerothBuddyUI ist ein eigenständiges WoW-Addon für WoW Retail / Midnight. UI-Layout mit Minimap, nativem Blizzard-Tracking, Kalender, Aktionsleisten, Chat und Unitframes.
 
-Beginne bei `Core.lua`, `Layout.lua` und dem betroffenen UI-Modul. Beim Tracking den Original-Frame und dessen Menü, Klick und Tooltip erhalten. CVar-Einrichtung erfolgt manuell über `/abui`. Die frühere Retail-Variante liegt im lokalen Archiv.
+Beginne bei `Core.lua`, `Layout.lua` und dem betroffenen UI-Modul. Beim Tracking den Original-Frame und dessen Menü, Klick und Tooltip erhalten. CVar-Einrichtung erfolgt manuell über `/abui`.
 
 ## Ablauf für Codex und OpenCode
 

@@ -29,7 +29,7 @@ function UI.CreateClassPower()
     end
     local syncPoll
     local function refresh()
-        local spec = UI.GetSpecialization()
+        local spec = C_SpecializationInfo.GetSpecialization()
         if not UI.Public(spec) then spec = nil end
         local mainType, token = UnitPowerType("player")
         local kind, count, mode = nil, 1, "hidden"

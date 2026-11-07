@@ -876,14 +876,6 @@ for _,spec in ipairs({1,2}) do
 end
 UnitClass, UnitPower = savedClass, savedPower
 local oldMax, oldType = UnitPowerMax, UnitPowerType
--- Forever: optional specialization API must not abort resource creation.
-local savedSpecAPI = C_SpecializationInfo
-for _, api in ipairs({false, {}, {GetSpecialization=function() error("unavailable") end}, {GetSpecialization=function() return secret end}, {GetSpecialization=function() return "1" end}}) do
-    C_SpecializationInfo = api or nil
-    assert(UI.GetSpecialization()==nil, "invalid specialization must be ignored")
-    UI.CreateClassPower()
-end
-C_SpecializationInfo = savedSpecAPI
 local oldSpec = C_SpecializationInfo.GetSpecialization
 local testClass, testSpec, mainKind, maximum = "WARRIOR", 1, 1, 6
 for key,value in pairs({ComboPoints=4,Chi=12,ArcaneCharges=16,Essence=19,Energy=3}) do Enum.PowerType[key]=value end

@@ -4,12 +4,6 @@ UI.FONT = STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF"
 function UI.Public(value)
     return not (issecretvalue and issecretvalue(value))
 end
--- Spezialisierungen sind optional; fehlende APIs liefern keine Retail-Annahme.
-function UI.GetSpecialization()
-    if type(C_SpecializationInfo) ~= "table" or type(C_SpecializationInfo.GetSpecialization) ~= "function" then return nil end
-    local ok, spec = pcall(C_SpecializationInfo.GetSpecialization)
-    if ok and UI.Public(spec) and type(spec) == "number" then return spec end
-end
 -- Auch Methoden-/Feldauflösung fremder Frames gehört in den Schutzblock.
 function UI.Foreign(frame, action)
     if not UI.Public(frame) or not frame then return false end
@@ -181,7 +175,7 @@ function UI.Start()
     UI.started = true
     UI.InstallEquipment()
     raidState = (IsInRaid and IsInRaid()) and true or false
-    UI.Message("Version 1.0.2 (Forever) geladen. /abui für Leisten 1–4.")
+    UI.Message("Version 1.0.1 geladen. /abui für Leisten 1–4.")
 end
 -- Nur auf ausdrücklichen Slash-Aufruf Einstellungen ändern, nie beim Start.
 function UI.ConfigureActionBars()
