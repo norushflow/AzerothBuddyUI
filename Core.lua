@@ -97,6 +97,7 @@ events:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_LOGIN" then
         ScreenshotUIDB = ScreenshotUIDB or {}
         ScreenshotUIDB.positions = ScreenshotUIDB.positions or {}
+        UI.ReportEditLayoutResult()
         if ScreenshotUIDB.enabled == false then return end
         if InCombatLockdown() then UI.pendingStart = true; return end
         UI.Start()
@@ -175,7 +176,7 @@ function UI.Start()
     UI.started = true
     UI.InstallEquipment()
     raidState = (IsInRaid and IsInRaid()) and true or false
-    UI.Message("Version 1.0.1 geladen. /abui für Leisten 1–4.")
+    UI.Message("Version 1.0.2 geladen. /abui für Leisten 1–4.")
 end
 -- Nur auf ausdrücklichen Slash-Aufruf Einstellungen ändern, nie beim Start.
 function UI.ConfigureActionBars()
@@ -218,11 +219,14 @@ SLASH_AZEROTHBUDDYUI1 = "/abui"
 SlashCmdList.AZEROTHBUDDYUI = function(message)
     local command = (message or ""):lower():match("^%s*(.-)%s*$")
     if InCombatLockdown() then UI.Message("Bitte nach dem Kampf erneut versuchen."); return end
-    if command == "blizzard" then
+    if command == "layoutstatus" then
+        UI.PrintEditLayoutStatus()
+    elseif command == "blizzard" then
         ScreenshotUIDB.enabled = false
         UI.Message("Neustart ohne UI-Eingriffe. Danach Blizzard-Bearbeitungsmodus normal öffnen; zurück mit /abui on.")
         ReloadUI()
     elseif command == "off" or command == "on" then
+        if command == "on" and not UI.EnableEditLayout() then return end
         ScreenshotUIDB.enabled = command == "on"
         ReloadUI()
     elseif not UI.started then
@@ -235,6 +239,6 @@ SlashCmdList.AZEROTHBUDDYUI = function(message)
         ScreenshotUIDB.positions = {}
         UI.ApplyLayout()
     else
-        UI.Message("/abui reset · raidtest 20 · raidtest off · blizzard · off · on. /abui setzt Leisten 1–4 und deaktiviert den Abklingzeitmanager.")
+        UI.Message("/abui reset · raidtest 20 · raidtest off · blizzard · off · on · layoutstatus. /abui setzt Leisten 1–4 und deaktiviert den Abklingzeitmanager.")
     end
 end

@@ -1,3 +1,8 @@
+local editCallbacks = {}
+EventRegistry = {RegisterCallback=function(_, event, callback)
+    assert(not editCallbacks[event], "duplicate edit mode callback")
+    editCallbacks[event] = callback
+end}
 -- Run from the workspace root: luajit AzerothBuddyUI/tests/test_ui.lua
 local combat = false
 local objects = {}
@@ -369,7 +374,7 @@ function WarlockPowerFrame:GetUnit()
     return unit or "player"
 end
 local UI={}
-for _,file in ipairs({"Core.lua","Tooltips.lua","Equipment.lua","GroupDebuffs.lua","Units.lua","Progress.lua","Castbars.lua","ClassPower.lua","Layout.lua","RaidTest.lua"}) do assert(loadfile(""..file))("AzerothBuddyUI",UI) end
+for _,file in ipairs({"Core.lua","EditLayout.lua","Tooltips.lua","Equipment.lua","GroupDebuffs.lua","Units.lua","Progress.lua","Castbars.lua","ClassPower.lua","Layout.lua","RaidTest.lua"}) do assert(loadfile(""..file))("AzerothBuddyUI",UI) end
 local dispatcher
 for _,o in ipairs(objects) do if o.events.PLAYER_LOGIN then dispatcher=o end end
 assert(dispatcher)
@@ -1054,7 +1059,16 @@ do
     assert(not StanceBar.snappedFrames[probe] and not probe.snappedToFrame, "ClearAllPoints must drop the snap")
 end
 assert(PetActionButton10.width==MultiBarRightButton1.width*MultiBarRightButton1.scale and PetActionButton10.abuiQuestSkin)
-assert(EditModeManagerFrame.scripts.OnHide, "edit mode hook must be installed")
+assert(not EditModeManagerFrame.scripts.OnHide, "do not hook the protected manager")
+assert(not EditModeManagerFrame.abuiEditWatcher, "do not write watcher state to Blizzard")
+assert(editCallbacks["EditMode.Exit"], "edit mode exit callback must be installed")
+do
+    local apply, calls = UI.ApplyLayout, 0
+    UI.ApplyLayout = function() calls = calls + 1 end
+    editCallbacks["EditMode.Exit"]()
+    assert(calls == 0, "layout must not run inside Blizzard reset")
+    UI.ApplyLayout = apply
+end
 assert(Minimap.width==240 and MinimapCluster.scale==1, "native map dimensions preserved")
 assert(BuffFrame.point[2]==Minimap and BuffFrame.point[3]=="TOPLEFT")
 assert(MinimapCluster.Tracking.parent==MinimapCluster and MinimapCluster.Tracking.shown,

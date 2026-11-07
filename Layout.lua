@@ -113,16 +113,16 @@ local function hideNative(frame, vehicle, raid)
         RegisterStateDriver(host, "visibility", vehicle and "[vehicleui] show; hide" or raid and "[group:raid] show; hide" or "hide")
     end)
 end
--- Das Schließen des Bearbeitungsmodus löst das Layout erneut aus. Ereignis-
--- gesteuert über OnHide statt mit einem dauerhaften 0,5-s-Ticker.
+-- Observe Blizzard's public exit event without writing to the manager or
+-- running our frame mutations inside its OnHide/reset call stack.
 function UI.WatchEditMode()
-    UI.Foreign(EditModeManagerFrame, function(frame)
-        if frame.abuiEditWatcher then return end
-        frame:HookScript("OnHide", function()
+    if UI.editModeWatcher or not EventRegistry then return end
+    EventRegistry:RegisterCallback("EditMode.Exit", function()
+        C_Timer.After(0, function()
             if UI.started and not InCombatLockdown() then UI.ApplyLayout() end
         end)
-        frame.abuiEditWatcher = true
-    end)
+    end, UI)
+    UI.editModeWatcher = true
 end
 
 function UI.CreateLayout()

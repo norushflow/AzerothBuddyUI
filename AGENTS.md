@@ -18,3 +18,10 @@ Beginne bei `Core.lua`, `Layout.lua` und dem betroffenen UI-Modul. Beim Tracking
 - Bei Verhaltensänderungen die README knapp ergänzen. Die Version erst für einen beauftragten Release anpassen. TOC, vorhandene interne Versionsmeldungen und README-Kopf abgleichen. Historische Einträge erhalten.
 - `./tools/package.sh` erzeugt nach grüner Prüfung ein lokales Installations-ZIP unter `dist/`. Für beauftragte Releases löst ein zur TOC passender Versions-Tag die automatische Veröffentlichung aus.
 - Das WowUp-ZIP enthält nur Addon-Dateien, Medien und Lizenz- oder Herkunftshinweise. `AGENTS.md`, KI-Übergaben, Entwicklerdokumentation, Tests, GitHub-Workflows, Backups, SavedVariables und Zugangsdaten gehören nicht hinein.
+
+## Layoutimport und lokale Pakete
+
+- `EditLayout.lua` enthält die Retail-Vorlage. Import und Auswahl nur ausdrücklich über `/abui on`; vorhandene gleichnamige Layouts und eigene Änderungen erhalten. `/abui layoutstatus` bleibt lesend.
+- Den EditModeManager nicht mit eigenen Feldern oder Fenster-Hooks verändern. `EditMode.Exit` nutzen und Layoutarbeit verzögert außerhalb von Blizzards Reset ausführen.
+- Nach lieferbaren Änderungen das Installationspaket mit `./tools/package.sh` in `dist/` erstellen. Dort nur den aktuellen Lieferstand halten; alte Pakete und entpackte Testkopien bei beauftragter Bereinigung ins lokale `Archiv/` außerhalb des Repositorys verschieben.
+- Am 07.11.2026 bestätigte der Benutzer die Korrektur im Client. Dies ersetzt keine vollständigen Kampf-/Raidtests.

@@ -1,4 +1,4 @@
-# AzerothBuddyUI 1.0.1 – WoW Retail
+# AzerothBuddyUI 1.0.2 – WoW Retail
 
 ## Entwicklung unter Linux
 
@@ -55,8 +55,8 @@ Gruppen-/Unitframes und weitere bereits vorhandene UI-Elemente.
 
 ## Projektstand und Prüfung
 
-- **Aktive Basis:** `AzerothBuddyUI-1.0.1/AzerothBuddyUI/`.
-- **Tests:** `TEMP/AzerothBuddyUI-1.0.1/tests/` (außerhalb des Addonordners).
+- **Aktive Basis:** dieses Git-Repository.
+- **Tests:** `tests/` im Repository.
 - **Prüfung:** von der Projektwurzel `./tools/check.sh` ausführen.
 - Am 01.11.2026 meldete der Benutzer: automatisierte Projektprüfung erfolgreich;
   die Tracking-Korrektur funktionierte im WoW-Client vor dem Versionsneustart.
@@ -64,10 +64,31 @@ Gruppen-/Unitframes und weitere bereits vorhandene UI-Elemente.
 - Am 02.11.2026 wurde die manuelle Verschiebefunktion entfernt; die normale
   Layoutpositionierung bleibt unverändert.
 - Ein Release-ZIP für 1.0.0 wurde nicht erstellt.
-- Designregeln: [UI-REFERENZEN.md](../../UI-REFERENZEN.md).
+- Designregeln: [UI-REFERENZEN.md](../../Archiv/UI-REFERENZEN.md).
 
 ## Historie
 
-[README-UI-HISTORIE.md](../../docs/README-UI-HISTORIE.md) enthält die früheren
+[README-UI-HISTORIE.md](../../Archiv/docs/README-UI-HISTORIE.md) enthält die früheren
 Versionsabschnitte mit ihrem jeweiligen damaligen Stand. Nicht als aktuelle
 Aufgabenliste verwenden.
+
+### Retail-Layout importieren
+
+`/abui on` importiert die mitgelieferte Retail-Vorlage als Account-Layout
+**AzerothBuddyUI**, wählt sie aus und lädt die Oberfläche neu. Ein vorhandenes
+Layout dieses Namens wird wiederverwendet; eigene Änderungen bleiben erhalten.
+Beim Login erfolgt kein automatischer Import oder Layoutwechsel.
+`/abui layoutstatus` zeigt die vorhandenen Layouts und das aktive Layout.
+Den Blizzard-Bearbeitungsmodus vor dem Aktivieren schließen. Die eigenen
+UI-Anpassungen des Addons bleiben aktiv und können importierte Positionen überlagern.
+
+Der Bearbeitungsmodus wird über `EditMode.Exit` beobachtet. Die erneute
+Anordnung erfolgt verzögert, außerhalb von Blizzards Fenster- und Gruppenreset.
+Bei bestehenden Taint-Meldungen nach dem Update zunächst `/reload` ausführen.
+
+## Änderungen 1.0.2 – 07.11.2026
+
+- Retail-Layoutimport und Statusanzeige aus der Forever-Variante übernommen.
+- Direkten EditMode-Fenster-Hook durch verzögerte Verarbeitung von `EditMode.Exit` ersetzt.
+- Benutzer bestätigt die Korrektur im Spiel; automatische Tests erfolgreich.
+- Aktuelles Installationspaket liegt in `dist/`; ältere lokale Testpakete liegen im Sammelarchiv.
