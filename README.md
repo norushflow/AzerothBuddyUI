@@ -21,14 +21,16 @@ Für WowUp die [Repository-Adresse](https://github.com/norushflow/AzerothBuddyUI
 
 ## Bedienung
 
-Beim ersten Login nach Installation dieses Updates erscheint einmalig pro Account ein Willkommensfenster. **One Button Setup** führt `/abui on` aus. Schließen überspringt den Dialog; der Befehl bleibt jederzeit verfügbar. Im Kampf wird das Fenster erst nach Kampfende angezeigt.
+Nach jedem Versionsupdate erscheint beim nächsten Login einmal pro Account das Setupfenster. Schließen überspringt die Einrichtung für diese Version. Im Kampf wartet das Fenster bis zum Kampfende; ein deaktiviertes UI öffnet es nur auf ausdrücklichen Aufruf.
 
-- `/abui`: Leisten und Abklingzeitmanager manuell einrichten.
-- `/abui on`: Layout aktivieren und die mitgelieferte Vorlage auswählen; anschließend wird die Oberfläche neu geladen.
-- `/abui off`: eigenes Layout deaktivieren; `/abui reset`: Positionen zurücksetzen.
+**Vorsicht: Layout wird überschrieben!** Mit **One Button Setup** wird **AzerothBuddyUI** durch die mitgelieferte Vorlage ersetzt und ausgewählt. Eigene Änderungen an diesem Layout gehen verloren. Andere Layouts bleiben erhalten. Der Login und das bloße Öffnen des Fensters verändern keine Layoutdaten.
+
+- `/abui on`: Setupfenster mit Überschreibwarnung öffnen.
+- `/abui off`: eigenes UI deaktivieren; `/abui reset`: Positionen zurücksetzen.
 - `/abui layoutstatus`: vorhandene und aktive Blizzard-Layouts anzeigen.
+- `/abui`: Leisten und Abklingzeitmanager manuell einrichten.
 
-Den Blizzard-Bearbeitungsmodus vor `/abui on` schließen. Ein vorhandenes Layout namens **AzerothBuddyUI** wird wiederverwendet; eigene Änderungen bleiben erhalten. Beim Login erfolgen kein Layoutimport und keine automatische Änderung der Spieloptionen.
+Vor dem Setup den Blizzard-Bearbeitungsmodus schließen. Nach erfolgreicher Einrichtung **`/reload` selbst im Chat eingeben**. Das Addon löst aus der verzögerten Prüfung keinen geschützten Reload aus.
 
 ## Änderungen und Entwicklung
 
@@ -36,5 +38,3 @@ Die [Versionshistorie](CHANGELOG.md) enthält ausschließlich Änderungen am Add
 Prüfungen, Paketbau und noch offene Spieltests stehen in [Entwicklung und Release](DEVELOPMENT.md).
 
 Nach diesem Update WoW vollständig neu starten, damit das Icon in der Addonübersicht neu eingelesen wird.
-
-`/abui on` bestätigt die tatsächliche Layoutauswahl nach dem Import, bevor die Oberfläche neu lädt. Bei nicht bestätigter Auswahl bleibt ein Reload aus; die Einrichtung kann erneut gestartet werden.

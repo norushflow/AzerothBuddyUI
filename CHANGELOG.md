@@ -2,11 +2,11 @@
 
 ## 1.0.3
 
-- Icon in der Addonübersicht auf spielgeeignetes TGA-Format korrigiert.
-- Layoutauswahl nach Import anhand des tatsächlichen Status bestätigt; Reload erfolgt erst nach erfolgreicher Auswahl.
-- Einmaliges Willkommensfenster beim ersten Login hinzugefügt.
-- „One Button Setup“ aktiviert die Einrichtung über `/abui on`.
-- Einrichtung bleibt manuell; im Kampf wird das Willkommensfenster aufgeschoben.
+- Setupfenster erscheint nach jedem Versionsupdate erneut und lässt sich über `/abui on` öffnen.
+- „One Button Setup“ warnt vor dem Überschreiben und ersetzt das Layout **AzerothBuddyUI** durch die mitgelieferte Vorlage.
+- Geschützten Reload aus der verzögerten Setupprüfung entfernt; nach erfolgreicher Einrichtung wird zum manuellen `/reload` aufgefordert.
+- Tatsächliche Layoutauswahl wird bestätigt; Kampf und fehlgeschlagene Auswahl werden abgefangen.
+- Icon in der Addonübersicht im spielgeeigneten TGA-Format ergänzt.
 
 ## 1.0.2
 

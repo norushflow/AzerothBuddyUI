@@ -1,4 +1,5 @@
 local _, UI = ...
+UI.VERSION = "1.0.3"
 UI.WHITE = "Interface\\Buttons\\WHITE8X8"
 UI.FONT = STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF"
 function UI.Public(value)
@@ -215,6 +216,17 @@ function UI.ConfigureActionBars()
     UI.Message("Aktionsleisten 1–4 aktiv, 5–8 aus. Abklingzeitmanager deaktiviert. /abui hilfe zeigt die Befehle.")
     return true
 end
+-- Called only by the explicit setup button after displaying the overwrite warning.
+function UI.RunSetup()
+    if InCombatLockdown() then UI.Message("Bitte nach dem Kampf erneut versuchen."); return end
+    if not UI.EnableEditLayout() then return end
+    UI.CompleteEditLayoutSetup(function()
+        ScreenshotUIDB.welcomeVersion = UI.VERSION
+        ScreenshotUIDB.enabled = true
+        UI.ShowSetupComplete()
+    end)
+end
+
 SLASH_AZEROTHBUDDYUI1 = "/abui"
 SlashCmdList.AZEROTHBUDDYUI = function(message)
     local command = (message or ""):lower():match("^%s*(.-)%s*$")
@@ -227,12 +239,7 @@ SlashCmdList.AZEROTHBUDDYUI = function(message)
         UI.Message("Neustart ohne UI-Eingriffe. Danach Blizzard-Bearbeitungsmodus normal öffnen; zurück mit /abui on.")
         ReloadUI()
     elseif command == "on" then
-        if not UI.EnableEditLayout() then return end
-        UI.CompleteEditLayoutSetup(function()
-            ScreenshotUIDB.welcomeSeen = true
-            ScreenshotUIDB.enabled = true
-            ReloadUI()
-        end)
+        UI.ShowWelcome(true)
     elseif command == "off" then
         UI.editLayoutPending = nil
         ScreenshotUIDB.enabled = false

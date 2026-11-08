@@ -21,7 +21,13 @@ Beginne bei `Core.lua`, `Layout.lua` und dem betroffenen UI-Modul. Beim Tracking
 
 ## Layoutimport und lokale Pakete
 
-- `EditLayout.lua` enthält die Retail-Vorlage. Import und Auswahl nur ausdrücklich über `/abui on`; vorhandene gleichnamige Layouts und eigene Änderungen erhalten. `/abui layoutstatus` bleibt lesend.
+- `EditLayout.lua` enthält die Retail-Vorlage. `/abui on` öffnet die Warnung; erst der Setupknopf überschreibt die gleichnamige Vorlage und wählt sie aus. Andere Layouts erhalten. `/abui layoutstatus` bleibt lesend.
 - Den EditModeManager nicht mit eigenen Feldern oder Fenster-Hooks verändern. `EditMode.Exit` nutzen und Layoutarbeit verzögert außerhalb von Blizzards Reset ausführen.
 - Nach lieferbaren Änderungen das Installationspaket mit `./tools/package.sh` in `dist/` erstellen. Dort nur den aktuellen Lieferstand halten; alte Pakete und entpackte Testkopien bei beauftragter Bereinigung ins lokale `Archiv/` außerhalb des Repositorys verschieben.
 - Am 07.11.2026 bestätigte der Benutzer die Korrektur im Client. Dies ersetzt keine vollständigen Kampf-/Raidtests.
+
+## Setup nach Versionsupdates
+
+- Das Setupfenster erscheint einmal je Addon-Version; `UI.VERSION`, TOC und Versionsmeldung gemeinsam aktualisieren.
+- Erst der Klick auf One Button Setup überschreibt nach sichtbarer Warnung das eigene benannte Layout. Andere Layouts bleiben erhalten.
+- Kein Reload aus dem verzögerten Setupabschluss; zum manuellen `/reload` auffordern.

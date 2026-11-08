@@ -23,11 +23,36 @@ function UI.EnableEditLayout()
 
         end
         local index, active = findLayout()
-        if not index then
+        local replacement = api.ConvertStringToLayoutInfo(layoutString)
+        assert(type(replacement) == "table" and type(replacement.systems) == "table" and #replacement.systems > 0, "Vorlage ungültig")
+        if index then
+            assert(type(api.SaveLayouts) == "function", "Layouts können nicht gespeichert werden")
+            -- Work on the API snapshot, never mutate the manager's cached layout table.
+            local saved = api.GetLayouts()
+            local function copy(value)
+                if type(value) ~= "table" then return value end
+                local result = {}
+                for k, v in pairs(value) do result[k] = copy(v) end
+                return result
+            end
+            saved = copy(saved)
+            local replaced = false
+            for slot, existing in pairs(saved.layouts or {}) do
+                if existing.layoutName == layoutName then
+                    assert(existing.layoutType ~= Enum.EditModeLayoutType.Preset, "Blizzard-Vorlagen bleiben unverändert")
+                    replacement.layoutName = layoutName
+                    replacement.layoutType = existing.layoutType or Enum.EditModeLayoutType.Account
+                    saved.layouts[slot] = replacement
+                    replaced = true
+                    break
+                end
+            end
+            assert(replaced, "Layoutdaten nicht verfügbar")
+            api.SaveLayouts(saved)
+            action = "überschrieben"
+        else
             assert(type(manager.ImportLayout) == "function", "Layoutimport nicht verfügbar")
-            local info = api.ConvertStringToLayoutInfo(layoutString)
-            assert(type(info) == "table" and type(info.systems) == "table" and #info.systems > 0)
-            manager:ImportLayout(info, Enum.EditModeLayoutType.Account, layoutName)
+            manager:ImportLayout(replacement, Enum.EditModeLayoutType.Account, layoutName)
             action = "neu importiert"
             index, active = findLayout()
             assert(index, "Layout import failed")
