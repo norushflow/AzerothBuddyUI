@@ -75,3 +75,55 @@ C_EditMode={
 }
 assert(UI.EnableEditLayout() and dropdown.activeLayout==4 and imports==1)
 print("PASS: selection uses Blizzard dropdown indices instead of raw layout array indices")
+
+-- Import notifications and manager cache must not decide whether reload is safe.
+local queue, completed, writes = {}, 0, 0
+C_Timer={After=function(_,callback) queue[#queue+1]=callback end}
+local actual=1
+local cached={activeLayout=4,layouts={[4]={layoutName="AzerothBuddyUI"}}}
+EditModeManagerFrame={layoutInfo=cached,IsForbidden=function() return false end,IsShown=function() return false end}
+ScreenshotUIDB={}
+C_EditMode={GetLayouts=function() return {activeLayout=actual} end,
+    SetActiveLayout=function(index) writes=writes+1; actual=index end}
+assert(UI.EnableEditLayout() and actual==4 and writes==1, "stale manager cache must not skip real selection")
+-- Simulate an import notification restoring the old selection in this frame.
+actual=1
+UI.CompleteEditLayoutSetup(function() completed=completed+1 end)
+assert(completed==0, "never reload in the import call stack")
+table.remove(queue,1)()
+assert(completed==0 and #queue==1)
+table.remove(queue,1)()
+assert(completed==1 and actual==4 and writes==2 and ScreenshotUIDB.editLayoutResult)
+
+-- Delayed selection confirmation is awaited, without repeated writes.
+actual=1
+C_EditMode.SetActiveLayout=function() writes=writes+1 end
+assert(UI.EnableEditLayout())
+UI.CompleteEditLayoutSetup(function() completed=completed+1 end)
+table.remove(queue,1)()
+assert(completed==1 and #queue==1)
+actual=4
+table.remove(queue,1)()
+assert(completed==2 and #queue==0)
+
+-- A rejected selection times out and never enables/reloads the addon.
+actual=1
+assert(UI.EnableEditLayout())
+UI.CompleteEditLayoutSetup(function() error("must not reload on failure") end)
+local checks=0
+while #queue>0 do checks=checks+1; assert(checks<=5); table.remove(queue,1)() end
+assert(not UI.editLayoutPending and not UI.editLayoutFinalizing)
+
+actual=4
+assert(UI.EnableEditLayout())
+UI.CompleteEditLayoutSetup(function() error("must not reload in combat") end)
+combat=true
+table.remove(queue,1)()
+combat=false
+assert(not UI.editLayoutFinalizing)
+assert(UI.EnableEditLayout())
+UI.CompleteEditLayoutSetup(function() error("off must cancel pending setup") end)
+UI.editLayoutPending=nil
+table.remove(queue,1)()
+assert(not UI.editLayoutFinalizing)
+print("PASS: stale import cache, deferred selection, bounded confirmation, failure, combat and cancellation")

@@ -3,7 +3,7 @@
 ## Notes: Einheitentafeln, Leisten, Minimap, Auren und Klassenressourcen.
 ## Author: Basti
 ## Version: 1.0.3
-## IconTexture: Interface\AddOns\AzerothBuddyUI\Media\BuddyIcon
+## IconTexture: Interface\AddOns\AzerothBuddyUI\Media\BuddyIcon.tga
 ## SavedVariables: ScreenshotUIDB
 Core.lua
 EditLayout.lua

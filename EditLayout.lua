@@ -4,7 +4,7 @@ local layoutString = [=[2 52 0 0 0 4 4 UIParent 110.0 -234.2 -1 ##$$%/&('%)$+#,$
 
 -- Explicit /abui on only; never change the selected layout during login.
 function UI.EnableEditLayout()
-    if InCombatLockdown() then return false end
+    if InCombatLockdown() or UI.editLayoutFinalizing then return false end
     local action = "bereits vorhanden"
     local ok, failure = pcall(function()
         local api = C_EditMode
@@ -32,20 +32,58 @@ function UI.EnableEditLayout()
             index, active = findLayout()
             assert(index, "Layout import failed")
         end
+        -- The manager may already show the imported layout before it is active.
+        active = api.GetLayouts().activeLayout
         if index ~= active then
             api.SetActiveLayout(index)
             action = action .. ", ausgewählt"
         else
             action = action .. ", bereits aktiv"
         end
-        local selected = api.GetLayouts()
-        assert(selected.activeLayout == index, "Layout selection failed")
+        UI.editLayoutPending = {index=index, action=action}
     end)
     if not ok then
         UI.Message("Layout konnte nicht aktiviert werden: " .. tostring(failure))
     end
-    if ok and ScreenshotUIDB then ScreenshotUIDB.editLayoutResult = action end
     return ok
+end
+
+-- Let import notifications settle before committing the explicit setup/reload.
+function UI.CompleteEditLayoutSetup(onReady)
+    local pending = UI.editLayoutPending
+    if not pending or UI.editLayoutFinalizing then return end
+    UI.editLayoutFinalizing = true
+    local attempts = 0
+    local function finish()
+        if UI.editLayoutPending ~= pending then UI.editLayoutFinalizing = nil; return end
+        local ok, selected = pcall(function()
+            assert(not InCombatLockdown(), "Bitte nach dem Kampf erneut versuchen")
+            local manager = EditModeManagerFrame
+            assert(manager and not manager:IsForbidden() and not manager:IsShown(), "Bitte Bearbeitungsmodus schließen")
+            local layout = manager.layoutInfo.layouts[pending.index]
+            assert(layout and layout.layoutName == layoutName, "Layoutliste hat sich geändert")
+            local active = C_EditMode.GetLayouts().activeLayout
+            if attempts == 0 and active ~= pending.index then
+                C_EditMode.SetActiveLayout(pending.index)
+                return false -- Confirm on the next tick, never reload in a write callback.
+            end
+            return active == pending.index
+        end)
+        attempts = attempts + 1
+        if ok and not selected and attempts < 5 then
+            C_Timer.After(0.1, finish)
+            return
+        end
+        UI.editLayoutFinalizing = nil
+        UI.editLayoutPending = nil
+        if not ok or not selected then
+            UI.Message("Layoutauswahl nicht bestätigt. Bitte Einrichtung erneut starten.")
+            return
+        end
+        ScreenshotUIDB.editLayoutResult = pending.action
+        onReady()
+    end
+    C_Timer.After(0, finish)
 end
 
 -- One-shot confirmation for the explicit command, surviving its ReloadUI.

@@ -34,3 +34,7 @@ Den Blizzard-Bearbeitungsmodus vor `/abui on` schließen. Ein vorhandenes Layout
 
 Die [Versionshistorie](CHANGELOG.md) enthält ausschließlich Änderungen am Addon.
 Prüfungen, Paketbau und noch offene Spieltests stehen in [Entwicklung und Release](DEVELOPMENT.md).
+
+Nach diesem Update WoW vollständig neu starten, damit das Icon in der Addonübersicht neu eingelesen wird.
+
+`/abui on` bestätigt die tatsächliche Layoutauswahl nach dem Import, bevor die Oberfläche neu lädt. Bei nicht bestätigter Auswahl bleibt ein Reload aus; die Einrichtung kann erneut gestartet werden.

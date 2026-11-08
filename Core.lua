@@ -222,13 +222,20 @@ SlashCmdList.AZEROTHBUDDYUI = function(message)
     if command == "layoutstatus" then
         UI.PrintEditLayoutStatus()
     elseif command == "blizzard" then
+        UI.editLayoutPending = nil
         ScreenshotUIDB.enabled = false
         UI.Message("Neustart ohne UI-Eingriffe. Danach Blizzard-Bearbeitungsmodus normal öffnen; zurück mit /abui on.")
         ReloadUI()
-    elseif command == "off" or command == "on" then
-        if command == "on" and not UI.EnableEditLayout() then return end
-        if command == "on" then ScreenshotUIDB.welcomeSeen = true end
-        ScreenshotUIDB.enabled = command == "on"
+    elseif command == "on" then
+        if not UI.EnableEditLayout() then return end
+        UI.CompleteEditLayoutSetup(function()
+            ScreenshotUIDB.welcomeSeen = true
+            ScreenshotUIDB.enabled = true
+            ReloadUI()
+        end)
+    elseif command == "off" then
+        UI.editLayoutPending = nil
+        ScreenshotUIDB.enabled = false
         ReloadUI()
     elseif not UI.started then
         UI.Message("Deaktiviert. Mit /abui on einschalten.")
