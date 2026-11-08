@@ -19,7 +19,7 @@ Eine übersichtliche Spieloberfläche mit eigenen Einheitentafeln, Zauberleisten
 
 Das Installations-ZIP unter [Releases](https://github.com/norushflow/AzerothBuddyUI/releases) herunterladen und den enthaltenen Ordner `AzerothBuddyUI` in `Interface/AddOns/` des passenden Spielclients entpacken. Die Datei `AzerothBuddyUI.toc` muss direkt in diesem Ordner liegen. Anschließend im Spiel aktivieren und `/reload` ausführen.
 
-Für WowUp die [Repository-Adresse](https://github.com/norushflow/AzerothBuddyUI) mit Zugriff auf dieses private Repository importieren und den passenden Spielclient wählen.
+Für WowUp die [Repository-Adresse](https://github.com/norushflow/AzerothBuddyUI) importieren und den passenden Spielclient wählen.
 
 ## Bedienung
 
