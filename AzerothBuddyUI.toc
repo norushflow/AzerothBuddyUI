@@ -5,6 +5,7 @@
 ## Version: 1.0.3
 ## IconTexture: Interface\AddOns\AzerothBuddyUI\Media\BuddyIcon.tga
 ## SavedVariables: ScreenshotUIDB
+## SavedVariablesPerCharacter: AzerothBuddyUICharDB
 Core.lua
 EditLayout.lua
 Tooltips.lua

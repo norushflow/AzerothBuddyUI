@@ -28,6 +28,6 @@ Beginne bei `Core.lua`, `Layout.lua` und dem betroffenen UI-Modul. Beim Tracking
 
 ## Setup nach Versionsupdates
 
-- Das Setupfenster erscheint einmal je Addon-Version; `UI.VERSION`, TOC und Versionsmeldung gemeinsam aktualisieren.
+- Das Setupfenster erscheint einmal je Charakter und Addon-Version; `UI.VERSION`, TOC und Versionsmeldung gemeinsam aktualisieren.
 - Erst der Klick auf One Button Setup überschreibt nach sichtbarer Warnung das eigene benannte Layout. Andere Layouts bleiben erhalten.
 - Kein Reload aus dem verzögerten Setupabschluss; zum manuellen `/reload` auffordern.

@@ -1,5 +1,10 @@
 local _, UI = ...
 UI.VERSION = "1.0.3"
+-- Setup acknowledgement belongs to this character, not the account layout.
+function UI.GetCharacterSettings()
+    AzerothBuddyUICharDB = AzerothBuddyUICharDB or {}
+    return AzerothBuddyUICharDB
+end
 UI.WHITE = "Interface\\Buttons\\WHITE8X8"
 UI.FONT = STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF"
 function UI.Public(value)
@@ -221,7 +226,7 @@ function UI.RunSetup()
     if InCombatLockdown() then UI.Message("Bitte nach dem Kampf erneut versuchen."); return end
     if not UI.EnableEditLayout() then return end
     UI.CompleteEditLayoutSetup(function()
-        ScreenshotUIDB.welcomeVersion = UI.VERSION
+        UI.GetCharacterSettings().welcomeVersion = UI.VERSION
         ScreenshotUIDB.enabled = true
         UI.ShowSetupComplete()
     end)
