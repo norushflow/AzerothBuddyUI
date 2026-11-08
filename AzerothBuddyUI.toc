@@ -2,7 +2,7 @@
 ## Title: AzerothBuddyUI
 ## Notes: Einheitentafeln, Leisten, Minimap, Auren und Klassenressourcen.
 ## Author: Basti
-## Version: 1.0.2
+## Version: 1.0.3
 ## IconTexture: Interface\AddOns\AzerothBuddyUI\Media\BuddyIcon
 ## SavedVariables: ScreenshotUIDB
 Core.lua
@@ -16,3 +16,4 @@ Castbars.lua
 ClassPower.lua
 Layout.lua
 RaidTest.lua
+Welcome.lua
