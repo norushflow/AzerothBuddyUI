@@ -6,6 +6,8 @@ Eine übersichtliche Spieloberfläche mit eigenen Einheitentafeln, Zauberleisten
 
 **Client:** WoW Retail / Midnight · **Interface:** 120105 · **Eigenständig:** keine zusätzlichen Addons erforderlich.
 
+**Layout-Auflösung:** Die mitgelieferte Vorlage ist für **3440 × 1440 Pixel (Ultrawide)** ausgelegt.
+
 ## Funktionen
 
 - Minimap mit nativem Tracking und Kalender.
