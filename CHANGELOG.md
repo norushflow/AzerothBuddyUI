@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5
+
+- CurseForge-Projekt-ID und Paketkonfiguration ergänzt.
+
 ## 1.0.4
 
 - Autorenangabe in der Addonübersicht auf **norushflow** geändert.
