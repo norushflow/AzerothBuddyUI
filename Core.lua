@@ -1,5 +1,5 @@
 local _, UI = ...
-UI.VERSION = "1.0.3"
+UI.VERSION = "1.0.4"
 -- Setup acknowledgement belongs to this character, not the account layout.
 function UI.GetCharacterSettings()
     AzerothBuddyUICharDB = AzerothBuddyUICharDB or {}
@@ -182,7 +182,7 @@ function UI.Start()
     UI.started = true
     UI.InstallEquipment()
     raidState = (IsInRaid and IsInRaid()) and true or false
-    UI.Message("Version 1.0.3 geladen. /abui für Leisten 1–4.")
+    UI.Message("Version 1.0.4 geladen. /abui für Leisten 1–4.")
 end
 -- Nur auf ausdrücklichen Slash-Aufruf Einstellungen ändern, nie beim Start.
 function UI.ConfigureActionBars()
