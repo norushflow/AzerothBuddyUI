@@ -1,10 +1,16 @@
 # Changelog
 
+## 1.0.7
+
+- Update class resource bar geometry only when the segment count changes.
+- Read the game clock once per tick, including at minute changes.
+- Streamline local checks and make release ZIPs reproducible.
+
 ## 1.0.6
 
-- Deutsche und englische Sprachdateien mit gemeinsamer Codebasis; `enUS`/`enGB` und Englisch als Fallback für weitere Sprachen.
-- Account-SavedVariable auf `AzerothBuddyUI` umgestellt. Vorhandenes `ScreenshotUIDB` wird beim Login übernommen, sofern noch keine neue Datenbank besteht.
-- Charakterbezogene Setup-Bestätigung bleibt erhalten.
+- Added German and English localization, with English as the fallback.
+- Existing `ScreenshotUIDB` settings migrate when the new `AzerothBuddyUI` database is absent.
+- Setup confirmation remains per character.
 
 ## 1.0.5
 

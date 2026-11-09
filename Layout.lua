@@ -158,17 +158,19 @@ function UI.CreateLayout()
     UI.info:SetWordWrap(false)
     UI.info:SetTextColor(.9, .79, .22)
     local lastMinute
-    local function refreshInfo()
-        local hour, minute = GetGameTime()
+    local function showInfo(hour, minute)
         lastMinute = minute
         UI.info:SetText(GetZoneText())
         UI.clock:SetFormattedText("%02d:%02d", hour, minute)
     end
+    local function refreshInfo()
+        showInfo(GetGameTime())
+    end
     -- The minute is the smallest unit shown: check once per second but only
     -- rewrite the text when it actually changes, so the clock never lags.
     local function tickClock()
-        local _, minute = GetGameTime()
-        if minute ~= lastMinute then refreshInfo() end
+        local hour, minute = GetGameTime()
+        if minute ~= lastMinute then showInfo(hour, minute) end
     end
     UI.header:RegisterEvent("ZONE_CHANGED_INDOORS")
     UI.header:RegisterEvent("ZONE_CHANGED_NEW_AREA")
@@ -235,7 +237,6 @@ function UI.ArrangeBar(spec)
             native:SetSize(264, 36)
             place(native, "BOTTOMLEFT", spec.anchor, "BOTTOMLEFT", 0, 0)
         end)
-        spec.slots = spec.slots or {}
         -- Bewusst sieben sichtbare Plätze; die Plätze 8–12 bleiben ausgeblendet.
         -- Wer das ändert, muss UI.SkinActionButton und ArrangeBar gemeinsam anpassen.
         for i=1,12 do

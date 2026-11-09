@@ -1,5 +1,5 @@
-# v1.0.6
+# v1.0.7
 
-- Added German and English translations. English is used for other client languages.
-- Existing account settings migrate from `ScreenshotUIDB` to `AzerothBuddyUI` at login if the new database does not exist yet.
-- Setup confirmation remains separate for each character.
+- Update class resource bar geometry only when the segment count changes.
+- Read the game clock once per tick, including at minute changes.
+- Streamline local checks and make release ZIPs reproducible.
