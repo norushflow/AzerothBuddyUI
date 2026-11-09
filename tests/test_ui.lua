@@ -1,3 +1,4 @@
+local loadfile = dofile("tests/load_locales.lua")
 local editCallbacks = {}
 EventRegistry = {RegisterCallback=function(_, event, callback)
     assert(not editCallbacks[event], "duplicate edit mode callback")
@@ -379,10 +380,10 @@ local dispatcher
 for _,o in ipairs(objects) do if o.events.PLAYER_LOGIN then dispatcher=o end end
 assert(dispatcher)
 local function event(e) dispatcher.scripts.OnEvent(dispatcher,e) end
-ScreenshotUIDB={enabled=false,positions={group={x=960,y=330},player={x=200,y=100},target={x=1400,y=100},actions1={x=900,y=84}}}
+AzerothBuddyUI={enabled=false,positions={group={x=960,y=330},player={x=200,y=100},target={x=1400,y=100},actions1={x=900,y=84}}}
 event("PLAYER_LOGIN")
 assert(not UI.started,"disabled addon changed layout")
-ScreenshotUIDB.enabled=true
+AzerothBuddyUI.enabled=true
 combat=true;event("PLAYER_LOGIN")
 assert(UI.pendingStart and not UI.started,"combat startup not deferred")
 combat=false
@@ -540,15 +541,15 @@ C_UnitAuras.AddPrivateAuraAnchor=function() error("simulated API failure") end
 assert(not UI.CreateGroupDebuffs({unit="raid1"}))
 C_UnitAuras.AddPrivateAuraAnchor=savedAdd
 
-assert(ScreenshotUIDB.combatLayout024, "layout migration missing")
+assert(AzerothBuddyUI.combatLayout024, "layout migration missing")
 assert(UI.player.point[1]=="RIGHT" and UI.player.point[2]==UI.combatAnchor
     and UI.player.point[3]=="LEFT" and UI.player.point[4]==-20 and UI.player.point[5]==38)
 assert(UI.target.point[1]=="LEFT" and UI.target.point[2]==UI.combatAnchor
     and UI.target.point[3]=="RIGHT" and UI.target.point[4]==20 and UI.target.point[5]==38)
 assert(UI.combatAnchor.point[1]=="CENTER" and UI.combatAnchor.point[4]==960
     and UI.combatAnchor.point[5]==333, "saved group height lost during migration")
-assert(not ScreenshotUIDB.positions.player and not ScreenshotUIDB.positions.target
-    and not ScreenshotUIDB.positions.actions1 and not ScreenshotUIDB.positions.group,
+assert(not AzerothBuddyUI.positions.player and not AzerothBuddyUI.positions.target
+    and not AzerothBuddyUI.positions.actions1 and not AzerothBuddyUI.positions.group,
     "old positions must not override the new layout")
 assert(UI.group.point[1]=="TOP" and UI.group.point[2]==UI.playerCastAnchor
     and UI.group.point[3]=="BOTTOM" and UI.group.point[5]==-20)
@@ -1124,11 +1125,11 @@ assert(UI.holyPower.segments[5].value==secret)
 SlashCmdList.AZEROTHBUDDYUI("off")
 assert(reloads==0)
 combat=false
-ScreenshotUIDB.positions.player={x=500,y=300}
+AzerothBuddyUI.positions.player={x=500,y=300}
 SlashCmdList.AZEROTHBUDDYUI("reset")
-assert(next(ScreenshotUIDB.positions)==nil)
+assert(next(AzerothBuddyUI.positions)==nil)
 assert(UI.combatAnchor.point[5]==1080*.278-23, "reset must restore the default group height")
-ScreenshotUIDB.positions.player={x=500,y=300}
+AzerothBuddyUI.positions.player={x=500,y=300}
 UI.ApplyLayout()
 assert(UI.player.point[1]=="CENTER" and UI.player.point[4]==500 and UI.player.point[5]==300,
     "saved positions after migration must remain supported")
@@ -1170,7 +1171,7 @@ UI.PositionPetBar()
 assert(StanceBar.point[2]==MultiBarRight, "secret form count falls back to stances off")
 GetNumShapeshiftForms = savedForms
 SlashCmdList.AZEROTHBUDDYUI("off")
-assert(not ScreenshotUIDB.enabled and reloads==1)
+assert(not AzerothBuddyUI.enabled and reloads==1)
 print("PASS: disabled/combat startup, secure layout guards, raw secret forwarding, unit actions, visibility, positions, reset, off")
 
 assert(UI.mapAnchor.point[4]==-4, "map border must align two points from right edge")

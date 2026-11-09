@@ -1,12 +1,15 @@
 ## Interface: 120105
 ## Title: AzerothBuddyUI
-## Notes: Einheitentafeln, Leisten, Minimap, Auren und Klassenressourcen.
+## Notes: Unit frames, action bars, minimap, auras and class resources.
+## Notes-deDE: Einheitentafeln, Leisten, Minimap, Auren und Klassenressourcen.
 ## Author: norushflow
-## Version: 1.0.5
+## Version: 1.0.6
 ## X-Curse-Project-ID: 1791306
 ## IconTexture: Interface\AddOns\AzerothBuddyUI\Media\BuddyIcon.tga
-## SavedVariables: ScreenshotUIDB
+## SavedVariables: AzerothBuddyUI
 ## SavedVariablesPerCharacter: AzerothBuddyUICharDB
+Locales/enUS.lua
+Locales/deDE.lua
 Core.lua
 EditLayout.lua
 Tooltips.lua

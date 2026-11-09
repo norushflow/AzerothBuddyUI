@@ -1,3 +1,4 @@
+local loadfile = dofile("tests/load_locales.lua")
 local UI = {}
 local frames, timers = {}, {}
 local combat, reloads, imports, bars = false, 0, 0, 0
@@ -31,7 +32,7 @@ UI.EnableEditLayout = function() imports = imports + 1; return allowImport end
 UI.EnableActionBars = function() bars = bars + 1; return allowBars end
 assert(loadfile("Welcome.lua"))("AzerothBuddyUI", UI)
 local events = frames[#frames]
-ScreenshotUIDB = {positions={}}
+AzerothBuddyUI = {positions={}}
 events.OnEvent(events, "PLAYER_LOGIN")
 assert(not UI.welcome and #timers == 1, "login must defer and not install")
 combat = true
@@ -53,16 +54,16 @@ UI.welcome.setupButton.OnClick()
 assert(reloads == 0 and UI.welcome.shown, "failed setup stays retryable")
 allowImport = true
 UI.welcome.setupButton.OnClick()
-assert(reloads == 0 and ScreenshotUIDB.enabled and AzerothBuddyUICharDB.welcomeVersion, "setup must not reload from completion callback")
+assert(reloads == 0 and AzerothBuddyUI.enabled and AzerothBuddyUICharDB.welcomeVersion, "setup must not reload from completion callback")
 assert(UI.welcome.description.text:find("/reload",1,true) and not UI.welcome.setupButton.shown, "completion asks for manual reload")
 UI.welcome.closeButton.OnClick()
 events.OnEvent(events, "PLAYER_REGEN_ENABLED")
 assert(not UI.welcome.shown, "dismissed welcome must not reopen")
 AzerothBuddyUICharDB = {}
-ScreenshotUIDB = {enabled=false}
+AzerothBuddyUI = {enabled=false}
 UI.ShowWelcome()
 assert(not UI.welcome.shown and not AzerothBuddyUICharDB.welcomeVersion, "disabled addon stays quiet")
-ScreenshotUIDB = {positions={}}
+AzerothBuddyUI = {positions={}}
 local before=imports
 SlashCmdList.AZEROTHBUDDYUI("on")
 assert(UI.welcome.shown and imports==before, "on opens warning without overwriting")
@@ -74,7 +75,7 @@ UI.ShowWelcome()
 assert(UI.welcome.shown and AzerothBuddyUICharDB.welcomeVersion=="99.0.0", "version update reopens setup")
 UI.welcome.closeButton.OnClick()
 AzerothBuddyUICharDB={}
-ScreenshotUIDB={positions={},welcomeSeen=true}
+AzerothBuddyUI={positions={},welcomeSeen=true}
 UI.ShowWelcome()
 assert(UI.welcome.shown, "old boolean does not suppress version setup")
 
@@ -83,7 +84,7 @@ print("PASS: first-login setup, combat deferral, no automatic configuration, ret
 assert(toc:find("## SavedVariablesPerCharacter: AzerothBuddyUICharDB",1,true))
 UI.welcome.closeButton.OnClick()
 local firstCharacter=AzerothBuddyUICharDB
-ScreenshotUIDB.welcomeVersion=UI.VERSION
+AzerothBuddyUI.welcomeVersion=UI.VERSION
 AzerothBuddyUICharDB=nil
 UI.ShowWelcome()
 assert(UI.welcome.shown and AzerothBuddyUICharDB~=firstCharacter, "new character must show setup despite account acknowledgement")

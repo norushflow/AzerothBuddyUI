@@ -337,7 +337,7 @@ function UI.PositionUnits()
     UI.targettarget:ClearAllPoints()
     UI.targettarget:SetPoint("BOTTOMRIGHT", UI.target, "TOPRIGHT", 0, 32)
     UI.Anchor(UI.bossAnchor, "bosses", "TOPRIGHT", -390, -410)
-    if ScreenshotUIDB.positions.focus then
+    if AzerothBuddyUI.positions.focus then
         UI.Anchor(UI.focus, "focus", "TOPRIGHT", -390, -314)
     else
         UI.focus:ClearAllPoints()

@@ -1,8 +1,9 @@
+local loadfile = dofile("tests/load_locales.lua")
 local combat, shown, forbidden = false, false, false
 function InCombatLockdown() return combat end
 local UI={Message=function() end}
 assert(loadfile("EditLayout.lua"))("AzerothBuddyUI",UI)
-ScreenshotUIDB={}
+AzerothBuddyUI={}
 Enum={EditModeLayoutType={Preset=0,Account=1}}
 local raw, cache, active, imports, saves, writes, completed, queue
 local reject, delayed, invalid
@@ -55,8 +56,8 @@ end
 reset(false)
 assert(UI.EnableEditLayout() and imports==1 and saves==0 and active==4)
 complete();assert(completed==0);drain();assert(completed==1)
-assert(ScreenshotUIDB.editLayoutResult)
-UI.ReportEditLayoutResult();assert(not ScreenshotUIDB.editLayoutResult)
+assert(AzerothBuddyUI.editLayoutResult)
+UI.ReportEditLayoutResult();assert(not AzerothBuddyUI.editLayoutResult)
 assert(pcall(UI.PrintEditLayoutStatus))
 reset(true)
 assert(UI.EnableEditLayout() and saves==1 and imports==0 and active==4)

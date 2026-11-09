@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.6
+
+- Deutsche und englische Sprachdateien mit gemeinsamer Codebasis; `enUS`/`enGB` und Englisch als Fallback für weitere Sprachen.
+- Account-SavedVariable auf `AzerothBuddyUI` umgestellt. Vorhandenes `ScreenshotUIDB` wird beim Login übernommen, sofern noch keine neue Datenbank besteht.
+- Charakterbezogene Setup-Bestätigung bleibt erhalten.
+
 ## 1.0.5
 
 - CurseForge-Projekt-ID und Paketkonfiguration ergänzt.

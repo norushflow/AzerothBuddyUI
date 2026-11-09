@@ -1,4 +1,4 @@
-# AzerothBuddyUI 1.0.5
+# AzerothBuddyUI 1.0.6
 
 <p align="center"><img src="branding/icon-400.png" alt="AzerothBuddyUI" width="160" height="160"></p>
 
@@ -14,6 +14,15 @@ Eine übersichtliche Spieloberfläche mit eigenen Einheitentafeln, Zauberleisten
 - Aktionsleisten, Chat und Fußleiste in einem gemeinsamen Layout.
 - Spieler-, Ziel-, Fokus-, Gruppen- und Raidrahmen sowie Auren.
 - Mitgeliefertes Layout für den Blizzard-Bearbeitungsmodus.
+
+## Sprachen und aktueller Stand
+
+Die Spielsprache bestimmt die Texte: Deutsch (`deDE`), Englisch (`enUS`, `enGB`), sonst Englisch. Die gemeinsame Codebasis lädt `Locales/enUS.lua` und anschließend die deutschen Übersetzungen. Namen aus Blizzard-APIs (z. B. Gegenstände, Zauber und Klassen) folgen weiterhin der Clientsprache.
+
+- Account-SavedVariable auf `AzerothBuddyUI` umgestellt. Vorhandenes `ScreenshotUIDB` wird beim Login übernommen, sofern noch keine neue Datenbank besteht.
+- Charakterbezogene Setup-Bestätigung bleibt erhalten.
+
+Die bisherige SavedVariables-Datei muss beim ersten Start noch vorhanden sein. Bereits vorhandene neue Einstellungen haben Vorrang. Nach dem nächsten Logout wird nur noch `AzerothBuddyUI` geschrieben; `AzerothBuddyUICharDB` bleibt unverändert. Vor dem Update kann die alte Datei im WTF-Ordner gesichert werden.
 
 ## Installation
 

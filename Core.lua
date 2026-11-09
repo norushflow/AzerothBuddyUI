@@ -1,5 +1,6 @@
 local _, UI = ...
-UI.VERSION = "1.0.5"
+local L = UI.L
+UI.VERSION = "1.0.6"
 -- Setup acknowledgement belongs to this character, not the account layout.
 function UI.GetCharacterSettings()
     AzerothBuddyUICharDB = AzerothBuddyUICharDB or {}
@@ -64,7 +65,7 @@ function UI.Message(text)
 end
 function UI.Anchor(frame, key, point, x, y, relative, relativePoint)
     frame:ClearAllPoints()
-    local position = ScreenshotUIDB.positions[key]
+    local position = AzerothBuddyUI.positions[key]
     if position then
         frame:SetPoint("CENTER", UIParent, "BOTTOMLEFT", position.x, position.y)
     else
@@ -101,10 +102,15 @@ end
 local raidState
 events:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_LOGIN" then
-        ScreenshotUIDB = ScreenshotUIDB or {}
-        ScreenshotUIDB.positions = ScreenshotUIDB.positions or {}
+        -- The old SavedVariables file is executed before PLAYER_LOGIN. Only
+        -- the new name is written on logout; never replace an existing new DB.
+        if type(AzerothBuddyUI) ~= "table" then
+            AzerothBuddyUI = type(ScreenshotUIDB) == "table" and ScreenshotUIDB or {}
+        end
+        ScreenshotUIDB = nil
+        AzerothBuddyUI.positions = AzerothBuddyUI.positions or {}
         UI.ReportEditLayoutResult()
-        if ScreenshotUIDB.enabled == false then return end
+        if AzerothBuddyUI.enabled == false then return end
         if InCombatLockdown() then UI.pendingStart = true; return end
         UI.Start()
     elseif event == "PLAYER_REGEN_ENABLED" and UI.pendingStart then
@@ -127,54 +133,54 @@ events:SetScript("OnEvent", function(_, event)
 end)
 function UI.Start()
     if UI.started then return end
-    if not ScreenshotUIDB.rightEdge046 then
-        ScreenshotUIDB.positions.minimap=nil
-        ScreenshotUIDB.rightEdge046=true
+    if not AzerothBuddyUI.rightEdge046 then
+        AzerothBuddyUI.positions.minimap=nil
+        AzerothBuddyUI.rightEdge046=true
     end
-    if not ScreenshotUIDB.bossFocusLayout018 then
-        local bossPosition = ScreenshotUIDB.positions.bosses
+    if not AzerothBuddyUI.bossFocusLayout018 then
+        local bossPosition = AzerothBuddyUI.positions.bosses
         if bossPosition then bossPosition.x = bossPosition.x - 360 end
-        ScreenshotUIDB.positions.focus = nil
-        ScreenshotUIDB.bossFocusLayout018 = true
+        AzerothBuddyUI.positions.focus = nil
+        AzerothBuddyUI.bossFocusLayout018 = true
     end
-    if not ScreenshotUIDB.bossFocusLayout019 then
+    if not AzerothBuddyUI.bossFocusLayout019 then
         for _, key in ipairs({"bosses", "focus"}) do
-            local position = ScreenshotUIDB.positions[key]
+            local position = AzerothBuddyUI.positions[key]
             if position then position.y = position.y - 100 end
         end
-        ScreenshotUIDB.bossFocusLayout019 = true
+        AzerothBuddyUI.bossFocusLayout019 = true
     end
-    if not ScreenshotUIDB.combatLayout024 then
+    if not AzerothBuddyUI.combatLayout024 then
         -- Retain the previous group row's height as the centre layout origin.
-        local group = ScreenshotUIDB.positions.group
+        local group = AzerothBuddyUI.positions.group
         if group then
-            ScreenshotUIDB.positions.combatOrigin = {x=group.x, y=group.y-7}
+            AzerothBuddyUI.positions.combatOrigin = {x=group.x, y=group.y-7}
         end
         for _, key in ipairs({"player", "target", "group", "actions1", "actions2", "actions3"}) do
-            ScreenshotUIDB.positions[key] = nil
+            AzerothBuddyUI.positions[key] = nil
         end
-        ScreenshotUIDB.combatLayout024 = true
+        AzerothBuddyUI.combatLayout024 = true
     end
-    if not ScreenshotUIDB.upperUnits026 then
-        ScreenshotUIDB.positions.player = nil
-        ScreenshotUIDB.positions.target = nil
-        ScreenshotUIDB.upperUnits026 = true
+    if not AzerothBuddyUI.upperUnits026 then
+        AzerothBuddyUI.positions.player = nil
+        AzerothBuddyUI.positions.target = nil
+        AzerothBuddyUI.upperUnits026 = true
     end
-    if not ScreenshotUIDB.combatOffset028 then
+    if not AzerothBuddyUI.combatOffset028 then
         -- Stored positions are absolute; relative attachments follow the block
         -- automatically and must not receive the offset a second time.
         for _, key in ipairs({"combatOrigin", "player", "target", "group", "actions1", "actions2", "actions3"}) do
-            local position = ScreenshotUIDB.positions[key]
+            local position = AzerothBuddyUI.positions[key]
             if position then position.y = position.y + 10 end
         end
-        ScreenshotUIDB.combatOffset028 = true
+        AzerothBuddyUI.combatOffset028 = true
     end
-    if not ScreenshotUIDB.actionTop047 then
+    if not AzerothBuddyUI.actionTop047 then
         for _,key in ipairs({"actions1","actions2","actions3"}) do
-            local position=ScreenshotUIDB.positions[key]
+            local position=AzerothBuddyUI.positions[key]
             if position then position.y=position.y+5 end
         end
-        ScreenshotUIDB.actionTop047=true
+        AzerothBuddyUI.actionTop047=true
     end
     UI.CreateUnits()
     UI.CreateLayout()
@@ -182,7 +188,7 @@ function UI.Start()
     UI.started = true
     UI.InstallEquipment()
     raidState = (IsInRaid and IsInRaid()) and true or false
-    UI.Message("Version 1.0.5 geladen. /abui für Leisten 1–4.")
+    UI.Message(L["Version 1.0.6 geladen. /abui für Leisten 1–4."])
 end
 -- Nur auf ausdrücklichen Slash-Aufruf Einstellungen ändern, nie beim Start.
 function UI.ConfigureActionBars()
@@ -213,21 +219,21 @@ function UI.ConfigureActionBars()
         assert(UI.Public(value) and value=="0", "cooldown setting rejected")
     end)
     if not ok then
-        UI.Message("Einstellungen konnten nicht vollständig übernommen werden. Bitte Aktionsleisten und Abklingzeitmanager in den WoW-Optionen prüfen.")
+        UI.Message(L["Einstellungen konnten nicht vollständig übernommen werden. Bitte Aktionsleisten und Abklingzeitmanager in den WoW-Optionen prüfen."])
         return false
     end
     UI.ApplyLayout()
     UI.ReapplySoon()
-    UI.Message("Aktionsleisten 1–4 aktiv, 5–8 aus. Abklingzeitmanager deaktiviert. /abui hilfe zeigt die Befehle.")
+    UI.Message(L["Aktionsleisten 1–4 aktiv, 5–8 aus. Abklingzeitmanager deaktiviert. /abui hilfe zeigt die Befehle."])
     return true
 end
 -- Called only by the explicit setup button after displaying the overwrite warning.
 function UI.RunSetup()
-    if InCombatLockdown() then UI.Message("Bitte nach dem Kampf erneut versuchen."); return end
+    if InCombatLockdown() then UI.Message(L["Bitte nach dem Kampf erneut versuchen."]); return end
     if not UI.EnableEditLayout() then return end
     UI.CompleteEditLayoutSetup(function()
         UI.GetCharacterSettings().welcomeVersion = UI.VERSION
-        ScreenshotUIDB.enabled = true
+        AzerothBuddyUI.enabled = true
         UI.ShowSetupComplete()
     end)
 end
@@ -235,30 +241,30 @@ end
 SLASH_AZEROTHBUDDYUI1 = "/abui"
 SlashCmdList.AZEROTHBUDDYUI = function(message)
     local command = (message or ""):lower():match("^%s*(.-)%s*$")
-    if InCombatLockdown() then UI.Message("Bitte nach dem Kampf erneut versuchen."); return end
+    if InCombatLockdown() then UI.Message(L["Bitte nach dem Kampf erneut versuchen."]); return end
     if command == "layoutstatus" then
         UI.PrintEditLayoutStatus()
     elseif command == "blizzard" then
         UI.editLayoutPending = nil
-        ScreenshotUIDB.enabled = false
-        UI.Message("Neustart ohne UI-Eingriffe. Danach Blizzard-Bearbeitungsmodus normal öffnen; zurück mit /abui on.")
+        AzerothBuddyUI.enabled = false
+        UI.Message(L["Neustart ohne UI-Eingriffe. Danach Blizzard-Bearbeitungsmodus normal öffnen; zurück mit /abui on."])
         ReloadUI()
     elseif command == "on" then
         UI.ShowWelcome(true)
     elseif command == "off" then
         UI.editLayoutPending = nil
-        ScreenshotUIDB.enabled = false
+        AzerothBuddyUI.enabled = false
         ReloadUI()
     elseif not UI.started then
-        UI.Message("Deaktiviert. Mit /abui on einschalten.")
+        UI.Message(L["Deaktiviert. Mit /abui on einschalten."])
     elseif command == "" then
         UI.ConfigureActionBars()
     elseif command == "raidtest" or command:match("^raidtest%s") then
         UI.RaidTest(command:match("^raidtest%s*(.*)$"))
     elseif command == "reset" then
-        ScreenshotUIDB.positions = {}
+        AzerothBuddyUI.positions = {}
         UI.ApplyLayout()
     else
-        UI.Message("/abui reset · raidtest 20 · raidtest off · blizzard · off · on · layoutstatus. /abui setzt Leisten 1–4 und deaktiviert den Abklingzeitmanager.")
+        UI.Message(L["/abui reset · raidtest 20 · raidtest off · blizzard · off · on · layoutstatus. /abui setzt Leisten 1–4 und deaktiviert den Abklingzeitmanager."])
     end
 end
