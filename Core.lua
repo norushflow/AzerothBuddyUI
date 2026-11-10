@@ -1,13 +1,12 @@
 local _, UI = ...
 local L = UI.L
-UI.VERSION = "1.0.7"
+local Style = UI.Style
+UI.VERSION = "1.1.0"
 -- Setup acknowledgement belongs to this character, not the account layout.
 function UI.GetCharacterSettings()
     AzerothBuddyUICharDB = AzerothBuddyUICharDB or {}
     return AzerothBuddyUICharDB
 end
-UI.WHITE = "Interface\\Buttons\\WHITE8X8"
-UI.FONT = STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF"
 function UI.Public(value)
     return not (issecretvalue and issecretvalue(value))
 end
@@ -20,13 +19,9 @@ function UI.Foreign(frame, action)
         return action(frame)
     end)
 end
-function UI.Text(parent, size, point, relative, x, y)
-    local text = parent:CreateFontString(nil, "OVERLAY")
-    text:SetFont(UI.FONT, size, "")
-    text:SetShadowColor(0, 0, 0, .85)
-    text:SetShadowOffset(1, -1)
+function UI.Text(parent, size, point, relative, x, y, color, flags)
+    local text = Style.Text(parent, size, color, flags)
     text:SetPoint(point, relative or parent, point, x or 0, y or 0)
-    text:SetTextColor(.92, .95, 1)
     return text
 end
 function UI.Panel(parent, width, height)
@@ -34,34 +29,17 @@ function UI.Panel(parent, width, height)
     -- Solid textures need no size reads or Backdrop OnSizeChanged arithmetic.
     local panel = CreateFrame("Frame", nil, parent)
     panel:SetSize(width, height)
-    panel.background = panel:CreateTexture(nil, "BACKGROUND")
-    panel.background:SetAllPoints(panel)
-    panel.borders = {}
-    for _, side in ipairs({"TOP", "BOTTOM", "LEFT", "RIGHT"}) do
-        local edge = panel:CreateTexture(nil, "BORDER")
-        if side=="TOP" or side=="BOTTOM" then
-            edge:SetPoint(side.."LEFT", panel, side.."LEFT", 0, 0)
-            edge:SetPoint(side.."RIGHT", panel, side.."RIGHT", 0, 0)
-            edge:SetHeight(1)
-        else
-            edge:SetPoint("TOP"..side, panel, "TOP"..side, 0, -1)
-            edge:SetPoint("BOTTOM"..side, panel, "BOTTOM"..side, 0, 1)
-            edge:SetWidth(1)
-        end
-        panel.borders[#panel.borders+1] = edge
-    end
-    function panel:SetBackdropColor(r,g,b,a)
-        self.background:SetColorTexture(r,g,b,a)
-    end
-    function panel:SetBackdropBorderColor(r,g,b,a)
-        for _, edge in ipairs(self.borders) do edge:SetColorTexture(r,g,b,a) end
-    end
-    panel:SetBackdropColor(.015, .02, .028, .9)
-    panel:SetBackdropBorderColor(.10, .12, .15, .72)
+    Style.Panel(panel)
     return panel
 end
+function UI.StyleStatusBar(bar)
+    bar:SetStatusBarTexture(Style.WHITE)
+    local background = bar:CreateTexture(nil, "BACKGROUND")
+    background:SetAllPoints(bar)
+    background:SetColorTexture(unpack(Style.Color.inset))
+end
 function UI.Message(text)
-    print("|cff35bbdfAzerothBuddyUI:|r " .. text)
+    print(Style.Hex(Style.Color.gold) .. "AzerothBuddyUI:|r " .. text)
 end
 function UI.Anchor(frame, key, point, x, y, relative, relativePoint)
     frame:ClearAllPoints()
@@ -188,7 +166,7 @@ function UI.Start()
     UI.started = true
     UI.InstallEquipment()
     raidState = (IsInRaid and IsInRaid()) and true or false
-    UI.Message(L["Version 1.0.7 geladen. /abui für Leisten 1–4."])
+    UI.Message(L["Version 1.1.0 geladen. /abui für Leisten 1–4."])
 end
 -- Nur auf ausdrücklichen Slash-Aufruf Einstellungen ändern, nie beim Start.
 function UI.ConfigureActionBars()

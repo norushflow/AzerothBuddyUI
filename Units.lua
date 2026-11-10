@@ -1,5 +1,20 @@
 local _, UI = ...
+local Style = UI.Style
+local Color = Style.Color
 local frames = {}
+local unitFont = STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF"
+
+-- Keep the unit labels' font and shadow from 1.0.7, including the raid preview.
+function UI.UnitText(parent, size, point, x, y, r, g, b)
+    local text = parent:CreateFontString(nil, "OVERLAY")
+    text:SetFont(unitFont, size, "")
+    text:SetShadowColor(0, 0, 0, .85)
+    text:SetShadowOffset(1, -1)
+    text:SetPoint(point, parent, point, x, y)
+    text:SetTextColor(r or .92, g or .95, b or 1)
+    return text
+end
+
 -- Percent colours by remaining health. Health percentages are secret in
 -- Midnight, so comparing or formatting them in Lua is barred. Instead each of
 -- the three overlapping labels gets a step-curve result as its alpha: the
@@ -18,20 +33,12 @@ local percentAlpha = {
     warn = alphaCurve({{0, 0}, {.405, 1}, {.755, 0}}),
     high = alphaCurve({{0, 0}, {.755, 1}}),
 }
-local function setPercentFont(frame, size)
-    frame.percent:SetFont(UI.FONT, size, "")
-    if frame.percentWarn then frame.percentWarn:SetFont(UI.FONT, size, "") end
-    if frame.percentLow then frame.percentLow:SetFont(UI.FONT, size, "") end
-end
 local function bar(parent, x, y, width, height)
     local status = CreateFrame("StatusBar", nil, parent)
     status:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
     status:SetSize(width, height)
-    status:SetStatusBarTexture(UI.WHITE)
+    UI.StyleStatusBar(status)
     status:SetMinMaxValues(0, 1)
-    local bg = status:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints()
-    bg:SetColorTexture(.04, .05, .07, 1)
     return status
 end
 local function update(frame)
@@ -77,31 +84,11 @@ local function update(frame)
         else frame.role:SetText("") end
     end
 end
--- Eigene Fläche und vier Ein-Punkt-Kanten statt BackdropTemplate, wie in
--- UI.Panel: feste Maße, keine Größenarithmetik und keine geheimen Werte.
-local function bindBackground(frame)
-    local background = frame:CreateTexture(nil, "BACKGROUND")
-    background:SetAllPoints(frame)
-    background:SetColorTexture(.012, .016, .022, .92)
-    for _, side in ipairs({"TOP", "BOTTOM", "LEFT", "RIGHT"}) do
-        local edge = frame:CreateTexture(nil, "BORDER")
-        if side == "TOP" or side == "BOTTOM" then
-            edge:SetPoint(side.."LEFT", frame, side.."LEFT", 0, 0)
-            edge:SetPoint(side.."RIGHT", frame, side.."RIGHT", 0, 0)
-            edge:SetHeight(1)
-        else
-            edge:SetPoint("TOP"..side, frame, "TOP"..side, 0, -1)
-            edge:SetPoint("BOTTOM"..side, frame, "BOTTOM"..side, 0, 1)
-            edge:SetWidth(1)
-        end
-        edge:SetColorTexture(.10, .12, .15, .8)
-    end
-end
-local function unitFrame(unit, width, height, compact, parent)
+local function unitFrame(unit, width, height, compact, parent, nameSize, percentSize)
     local frame = CreateFrame("Button", "AzerothBuddyUI_"..unit..(compact and "Group" or ""), parent, "SecureUnitButtonTemplate")
     frame.unit = unit
     frame:SetSize(width, height)
-    bindBackground(frame)
+    Style.Panel(frame)
     frame:SetAttribute("unit", unit)
     frame:SetAttribute("type1", "target")
     frame:SetAttribute("type2", "togglemenu")
@@ -116,26 +103,21 @@ local function unitFrame(unit, width, height, compact, parent)
     local sheen = overlay:CreateTexture(nil, "ARTWORK")
     sheen:SetPoint("TOPLEFT", frame, "TOPLEFT", 2, -2)
     sheen:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -2, 5)
-    sheen:SetTexture(UI.WHITE)
+    sheen:SetTexture(Style.WHITE)
     sheen:SetGradient("VERTICAL", CreateColor(0, 0, 0, .12), CreateColor(1, 1, 1, .06))
-    frame.name = UI.Text(overlay, compact and 10 or 20, compact and "CENTER" or "LEFT", nil, compact and 0 or 7, compact and 4 or 1)
+    frame.name = UI.UnitText(overlay, nameSize, compact and "CENTER" or "LEFT", compact and 0 or 7, compact and 4 or 1)
     frame.name:SetWidth(compact and width-6 or width-74)
     frame.name:SetWordWrap(false)
     frame.name:SetJustifyH(compact and "CENTER" or "LEFT")
-    frame.percent = UI.Text(overlay, compact and 11 or 19, compact and "BOTTOM" or "RIGHT", nil, compact and 0 or -6, compact and 8 or 0)
-    frame.percent:SetTextColor(.2, 1, .05)
+    local point = compact and "BOTTOM" or "RIGHT"
+    local x, y = compact and 0 or -6, compact and 8 or 0
+    frame.percent = UI.UnitText(overlay, percentSize, point, x, y, .2, 1, .05)
     if percentAlpha.warn then
-        local size = compact and 11 or 19
-        local point = compact and "BOTTOM" or "RIGHT"
-        local x = compact and 0 or -6
-        local y = compact and 8 or 0
-        frame.percentWarn = UI.Text(overlay, size, point, nil, x, y)
-        frame.percentWarn:SetTextColor(1, .82, .1)
-        frame.percentLow = UI.Text(overlay, size, point, nil, x, y)
-        frame.percentLow:SetTextColor(.92, .12, .09)
+        frame.percentWarn = UI.UnitText(overlay, percentSize, point, x, y, 1, .82, .1)
+        frame.percentLow = UI.UnitText(overlay, percentSize, point, x, y, .92, .12, .09)
     end
     if compact then
-        frame.role = UI.Text(overlay, 11, "TOPLEFT", nil, 3, 5)
+        frame.role = UI.UnitText(overlay, 11, "TOPLEFT", 3, 5)
         if UI.CreateGroupDebuffs(frame) then
             -- Keep names/percentages above the native bottom-row debuffs.
             frame.name:ClearAllPoints()
@@ -204,13 +186,11 @@ local function addAuras(parent, unit, count, size, filter, offset)
         icon.image = icon:CreateTexture(nil, "ARTWORK")
         icon.image:SetAllPoints()
         icon.image:SetTexCoord(.07, .93, .07, .93)
+        Style.Border(icon, Color.border, "OVERLAY")
         icon:EnableMouse(true)
         icon:SetScript("OnEnter", function(self)
-            if not auraAccessAllowed() then UI.HideUnitTooltip(); return end
-            UI.Foreign(GameTooltip, function(tooltip)
-                tooltip:SetOwner(self, "ANCHOR_RIGHT")
-                tooltip:SetUnitAura(unit, i, filter)
-            end)
+            if not auraAccessAllowed() then UI.HideUnitTooltip(self); return end
+            UI.ShowAuraTooltip(self, unit, i, filter)
         end)
         icon:SetScript("OnLeave", UI.HideUnitTooltip)
         icons[i] = icon
@@ -265,15 +245,11 @@ function UI.CreateUnits()
     -- the cast bar whose visibility changes during combat.
     UI.playerCastAnchor = CreateFrame("Frame", nil, UIParent)
     UI.playerCastAnchor:SetSize(264, 18)
-    UI.player = unitFrame("player", 300, 46, false, UIParent)
-    UI.target = unitFrame("target", 300, 46, false, UIParent)
-    UI.targettarget = unitFrame("targettarget", 148, 28, false, UIParent)
-    UI.targettarget.name:SetFont(UI.FONT, 12, "")
-    setPercentFont(UI.targettarget, 11)
+    UI.player = unitFrame("player", 300, 46, false, UIParent, 20, 19)
+    UI.target = unitFrame("target", 300, 46, false, UIParent, 20, 19)
+    UI.targettarget = unitFrame("targettarget", 148, 28, false, UIParent, 12, 11)
     RegisterStateDriver(UI.targettarget, "visibility", "[petbattle] hide; [@targettarget,exists] show; hide")
-    UI.focus = unitFrame("focus", 240, 38, false, UIParent)
-    UI.focus.name:SetFont(UI.FONT, 15, "")
-    setPercentFont(UI.focus, 14)
+    UI.focus = unitFrame("focus", 240, 38, false, UIParent, 15, 14)
     RegisterStateDriver(UI.focus, "visibility", "[petbattle] hide; [@focus,exists] show; hide")
     addAuras(UI.focus, "focus", 10, 15, "HARMFUL", -3)
     UI.bossAnchor = CreateFrame("Frame", nil, UIParent)
@@ -281,17 +257,13 @@ function UI.CreateUnits()
     UI.bosses = {}
     for i=1,MAX_BOSS_FRAMES or 5 do
         local unit = "boss"..i
-        local boss = unitFrame(unit, 240, 38, false, UI.bossAnchor)
-        boss.name:SetFont(UI.FONT, 15, "")
-        setPercentFont(boss, 14)
+        local boss = unitFrame(unit, 240, 38, false, UI.bossAnchor, 15, 14)
         boss:SetPoint("TOPLEFT", UI.bossAnchor, "TOPLEFT", 0, -(i-1)*88)
         RegisterStateDriver(boss, "visibility", "[petbattle] hide; [@"..unit..",exists] show; hide")
         addAuras(boss, unit, 10, 15, "HARMFUL", -3)
         UI.bosses[i] = boss
     end
-    UI.pet = unitFrame("pet", 148, 28, false, UIParent)
-    UI.pet.name:SetFont(UI.FONT, 12, "")
-    setPercentFont(UI.pet, 11)
+    UI.pet = unitFrame("pet", 148, 28, false, UIParent, 12, 11)
     RegisterStateDriver(UI.pet, "visibility", "[petbattle] hide; [vehicleui] hide; [@pet,exists] show; hide")
     addAuras(UI.target, "target", 12, 15, "HELPFUL", -4)
     addAuras(UI.target, "target", 12, 15, "HARMFUL", -22)
@@ -299,7 +271,7 @@ function UI.CreateUnits()
     UI.group:SetSize(441, 90)
     local units = {"party1", "party2", "party3", "party4", "player"}
     for i, unit in ipairs(units) do
-        local frame = unitFrame(unit, 56, 58, true, UI.group)
+        local frame = unitFrame(unit, 56, 58, true, UI.group, 10, 11)
         frame:SetScale(1.5)
         frame:SetPoint("LEFT", UI.group, "LEFT", (i-1)*59, 0)
         RegisterStateDriver(frame, "visibility", "[petbattle] hide; [vehicleui] hide; [group:raid] hide; [group:party,@"..unit..",exists] show; hide")
@@ -314,7 +286,7 @@ function UI.CreateUnits()
     UI.raid = {}
     for i = 1, 40 do
         local unit = "raid"..i
-        local frame = unitFrame(unit, 56, 58, true, UI.raidAnchor)
+        local frame = unitFrame(unit, 56, 58, true, UI.raidAnchor, 10, 11)
         frame:SetScale(1.5)
         RegisterStateDriver(frame, "visibility", "[petbattle] hide; [vehicleui] hide; [group:raid,@"..unit..",exists] show; hide")
         UI.raid[i] = frame

@@ -1,4 +1,6 @@
 local _, UI = ...
+local Style = UI.Style
+local Color = Style.Color
 local HEIGHT, GAP = 14, 4
 -- Retain Blizzard's XP, renown, friendship/paragon, visibility and tooltip logic.
 -- Only the two native display containers and their artwork are arranged here.
@@ -33,7 +35,6 @@ function UI.PositionProgress()
                 status:ClearAllPoints()
                 status:SetAllPoints(bar)
                 status:SetSize(width, HEIGHT)
-                -- Native Fortschrittstexturen und Hintergründe bleiben erhalten.
             end
             if not bar.suiProgressHooked and type(bar.Update) == "function" then
                 bar.suiProgressHooked = true
@@ -50,24 +51,23 @@ function UI.PositionProgress()
                 end
             end
             if status then
-                status:SetStatusBarTexture(UI.WHITE)
+                status:SetStatusBarTexture(Style.WHITE)
                 if bar.isExpBar then
                     if GetRestState()==1 then status:SetStatusBarColor(.25,.48,.72,.85)
                     else status:SetStatusBarColor(.55,.35,.70,.85) end
-                else status:SetStatusBarColor(.65,.50,.16,.85) end
+                else status:SetStatusBarColor(unpack(Color.bronze)) end
                 if status.Background then
-                    status.Background:SetTexture(UI.WHITE)
-                    status.Background:SetVertexColor(.04,.03,.015,.85)
+                    status.Background:SetTexture(Style.WHITE)
+                    status.Background:SetVertexColor(unpack(Color.inset))
                 end
                 if not bar.abuiProgressBorder then
                     local border=UI.Panel(bar,1,1)
-                    border:SetAllPoints(bar);border:SetBackdropColor(0,0,0,0)
-                    border:SetBackdropBorderColor(.75,.58,.12,.65)
+                    border:SetAllPoints(bar);border:SetBackdropColor(unpack(Color.transparent))
                     border:EnableMouse(false);bar.abuiProgressBorder=border
                 end
             end
             if bar.OverlayFrame and bar.OverlayFrame.Text then
-                bar.OverlayFrame.Text:SetFont(UI.FONT, 11, "OUTLINE")
+                Style.Font(bar.OverlayFrame.Text, "small", "OUTLINE")
             end
         end
         if not container.suiProgressHooked then
@@ -97,12 +97,9 @@ function UI.CreateHolyPower()
         local segment = CreateFrame("StatusBar", nil, holder)
         segment:SetSize(28, 8)
         segment:SetPoint("LEFT", holder, "LEFT", (i-1)*30, 0)
-        segment:SetStatusBarTexture(UI.WHITE)
+        UI.StyleStatusBar(segment)
         segment:SetStatusBarColor(1, .78, .18)
         segment:SetMinMaxValues(i-1, i)
-        local bg = segment:CreateTexture(nil, "BACKGROUND")
-        bg:SetAllPoints()
-        bg:SetColorTexture(.14, .12, .06, 1)
         holder.segments[i] = segment
     end
     local function refresh()
@@ -119,8 +116,7 @@ function UI.CreateHolyPower()
     refresh()
 end
 
--- XP uses native atlases (purple normal / blue rested), never WHITE8X8.
--- Only the rested extension geometry is adapted to the compact bar.
+-- Keep the rested extension aligned with the native XP tick in the compact bar.
 function UI.StyleRestedXP(bar)
     if InCombatLockdown() then return end
     pcall(function()
@@ -145,7 +141,7 @@ function UI.StyleRestedXP(bar)
         return
     end
     tick:SetAlpha(1)
-    fill:SetTexture(UI.WHITE)
+    fill:SetTexture(Style.WHITE)
     fill:SetVertexColor(.25,.48,.72,.35)
     fill:SetAlpha(1)
     fill:ClearAllPoints()
@@ -178,11 +174,8 @@ function UI.CreateSoulShards()
         local segment = CreateFrame("StatusBar", nil, holder)
         segment:SetSize(28, 8)
         segment:SetPoint("LEFT", holder, "LEFT", (i-1)*30, 0)
-        segment:SetStatusBarTexture(UI.WHITE)
+        UI.StyleStatusBar(segment)
         segment:SetStatusBarColor(.67, .42, .91)
-        local bg = segment:CreateTexture(nil, "BACKGROUND")
-        bg:SetAllPoints()
-        bg:SetColorTexture(.10, .06, .14, 1)
         holder.segments[i] = segment
     end
     local function refresh()

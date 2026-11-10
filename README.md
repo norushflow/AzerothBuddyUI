@@ -1,4 +1,4 @@
-# AzerothBuddyUI 1.0.7
+# AzerothBuddyUI 1.1.0
 
 <p align="center"><img src="branding/icon-400.png" alt="AzerothBuddyUI" width="160" height="160"></p>
 
@@ -30,6 +30,10 @@ Das Installations-ZIP unter [Releases](https://github.com/norushflow/AzerothBudd
 
 Für WowUp die [Repository-Adresse](https://github.com/norushflow/AzerothBuddyUI) importieren und den passenden Spielclient wählen.
 
+## Schrift
+
+Eine für den Einsatz im Spiel lizenzierte Expressway-Regular-Datei im TrueType-Format kann lokal unter `AzerothBuddyUI/Media/Expressway.ttf` im installierten Addon abgelegt werden. Nach einem Neustart verwendet AzerothBuddyUI sie für eigene Dialoge, Tooltips und weitere Texte im gemeinsamen Design. Ohne verwendbare Datei sowie im koreanischen und chinesischen Client greift das Addon auf die Schrift des Clients zurück. Einheitentafeln und Raid-Vorschau verwenden die Schrift und den Schatten aus Version 1.0.7. [Lizenzinformationen von Typodermic](https://typodermicfonts.com/license/).
+
 ## Bedienung
 
 Auf jedem neuen Charakter und nach jedem Versionsupdate erscheint beim nächsten Login einmal pro Charakter das Setupfenster. Schließen überspringt die Einrichtung für diese Version. Im Kampf wartet das Fenster bis zum Kampfende; ein deaktiviertes UI öffnet es nur auf ausdrücklichen Aufruf.
@@ -47,7 +51,3 @@ Vor dem Setup den Blizzard-Bearbeitungsmodus schließen. Nach erfolgreicher Einr
 
 Die [Versionshistorie](CHANGELOG.md) enthält ausschließlich Änderungen am Addon.
 Prüfungen, Paketbau und noch offene Spieltests stehen in [Entwicklung und Release](DEVELOPMENT.md).
-
-Nach diesem Update WoW vollständig neu starten, damit das Icon in der Addonübersicht neu eingelesen wird.
-
-Nach Installation dieses Updates WoW vollständig neu starten, damit die neue charakterbezogene Speicherung geladen wird. Der bisherige accountweite Setupstatus wird nicht übernommen; deshalb erscheint das Fenster auch auf bestehenden Charakteren einmal erneut.

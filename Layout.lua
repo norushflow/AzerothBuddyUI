@@ -1,4 +1,12 @@
 local _, UI = ...
+local Style = UI.Style
+local Color = Style.Color
+
+local function shadeStrip(panel)
+    panel:SetBackdropColor(0, 0, 0, .5)
+    panel:SetBackdropBorderColor(unpack(Color.transparent))
+end
+
 function UI.ClickFooterClock(_, mouse)
     if mouse ~= "LeftButton" and mouse ~= "RightButton" then return end
     pcall(function()
@@ -60,21 +68,10 @@ function UI.SkinActionButton(button)
     if not button or InCombatLockdown() then return end
     pcall(function()
         if button:IsForbidden() or button.abuiQuestSkin then return end
-        local bg=button:CreateTexture(nil,"BACKGROUND",nil,-8)
-        bg:SetAllPoints(button);bg:SetColorTexture(.025,.022,.012,.72)
-        local edges={}
-        for _,side in ipairs({"TOP","BOTTOM","LEFT","RIGHT"}) do
-            local edge=button:CreateTexture(nil,"OVERLAY",nil,1)
-            edge:SetColorTexture(.75,.58,.12,.7)
-            if side=="TOP" or side=="BOTTOM" then
-                edge:SetPoint(side.."LEFT",button,side.."LEFT")
-                edge:SetPoint(side.."RIGHT",button,side.."RIGHT");edge:SetHeight(1)
-            else
-                edge:SetPoint("TOP"..side,button,"TOP"..side)
-                edge:SetPoint("BOTTOM"..side,button,"BOTTOM"..side);edge:SetWidth(1)
-            end
-            edges[#edges+1]=edge
-        end
+        local bg = button:CreateTexture(nil, "BACKGROUND", nil, -8)
+        bg:SetAllPoints(button)
+        bg:SetColorTexture(unpack(Color.inset))
+        local edges = Style.Border(button, Color.border, "OVERLAY", 1)
         local icon=button.icon or button.Icon
         if icon and not icon:IsForbidden() then
             if button.IconMask and not button.IconMask:IsForbidden() then icon:RemoveMaskTexture(button.IconMask) end
@@ -88,18 +85,25 @@ function UI.SkinActionButton(button)
         end
         local normal=button:GetNormalTexture()
         if normal and not normal:IsForbidden() then normal:SetAlpha(0) end
-        button:SetHighlightTexture(UI.WHITE,"ADD")
-        button:SetPushedTexture(UI.WHITE)
+        button:SetHighlightTexture(Style.WHITE, "ADD")
+        button:SetPushedTexture(Style.WHITE)
         if button.SetCheckedTexture then
             button:SetCheckedTexture("Interface\\AddOns\\AzerothBuddyUI\\Media\\Selection")
             local checked=button:GetCheckedTexture()
             if checked and not checked:IsForbidden() then
-                checked:SetAllPoints(button);checked:SetVertexColor(1,.82,.2,.9)
+                checked:SetAllPoints(button)
+                checked:SetVertexColor(unpack(Color.selected))
             end
         end
         local hover,pressed=button:GetHighlightTexture(),button:GetPushedTexture()
-        if hover and not hover:IsForbidden() then hover:SetAllPoints(button);hover:SetVertexColor(.85,.65,.12,.18) end
-        if pressed and not pressed:IsForbidden() then pressed:SetAllPoints(button);pressed:SetVertexColor(.3,.2,.02,.32) end
+        if hover and not hover:IsForbidden() then
+            hover:SetAllPoints(button)
+            hover:SetVertexColor(unpack(Color.highlight))
+        end
+        if pressed and not pressed:IsForbidden() then
+            pressed:SetAllPoints(button)
+            pressed:SetVertexColor(Color.inset[1], Color.inset[2], Color.inset[3], .4)
+        end
         -- Cooldown, Ladungen, Tastenkürzel, Reichweite und Proc-Effekte bleiben nativ.
         button.abuiQuestSkin={background=bg,edges=edges}
     end)
@@ -128,20 +132,22 @@ end
 function UI.CreateLayout()
     UI.InstallTooltips()
     UI.footer = UI.Panel(UIParent,1,38)
-    UI.footer:SetBackdropColor(.025,.022,.012,.65)
-    UI.footer:SetBackdropBorderColor(.75,.58,.12,.45)
     UI.footer:SetPoint("BOTTOMLEFT")
     UI.footer:SetPoint("BOTTOMRIGHT")
     UI.footer:SetFrameStrata("BACKGROUND")
+    shadeStrip(UI.footer)
     UI.clockButton = CreateFrame("Button", nil, UI.footer)
     UI.clockButton:SetSize(100, 38)
     UI.clockButton:SetPoint("CENTER", UI.footer, "CENTER", 0, 0)
     UI.clockButton:SetFrameStrata("MEDIUM")
     UI.clockButton:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     UI.clockButton:SetScript("OnClick", UI.ClickFooterClock)
-    UI.clock = UI.Text(UI.clockButton, 27, "CENTER")
-    UI.header = CreateFrame("Frame", nil, UIParent)
-    UI.header:SetSize(220, 20)
+    UI.clockButton:SetHighlightTexture(Style.WHITE, "ADD")
+    UI.clockButton:GetHighlightTexture():SetVertexColor(unpack(Color.highlight))
+    UI.clock = UI.Text(UI.clockButton, 26, "CENTER", nil, 0, 0, Color.gold)
+    local plaqueWidth = 186
+    UI.header = UI.Panel(UIParent, plaqueWidth, 20)
+    shadeStrip(UI.header)
     -- Minimap ist ein fremdes Blizzard-Fenster: nur gesichert umhängen.
     pcall(function()
         local parent = Minimap
@@ -153,10 +159,9 @@ function UI.CreateLayout()
         if not Minimap or Minimap:IsForbidden() then return end
         UI.header:SetFrameLevel(Minimap:GetFrameLevel()+5)
     end)
-    UI.info = UI.Text(UI.header, 12, "CENTER")
-    UI.info:SetWidth(220)
+    UI.info = UI.Text(UI.header, "hud", "CENTER", nil, 0, 0, Color.gold)
+    UI.info:SetWidth(plaqueWidth - 2 * Style.Spacing.small)
     UI.info:SetWordWrap(false)
-    UI.info:SetTextColor(.9, .79, .22)
     local lastMinute
     local function showInfo(hour, minute)
         lastMinute = minute
@@ -190,13 +195,19 @@ function UI.CreateLayout()
     UI.mapAnchor:SetSize(240, 240)
     pcall(function()
         if not Minimap or Minimap:IsForbidden() then return end
-        Minimap:SetMaskTexture(UI.WHITE)
-        UI.mapBorder = UI.Panel(Minimap, 1, 1)
-        UI.mapBorder:SetBackdropColor(0, 0, 0, 0)
-        UI.mapBorder:SetBackdropBorderColor(.75,.58,.12,.7)
-        UI.mapBorder:SetPoint("TOPLEFT", -2, 2)
-        UI.mapBorder:SetPoint("BOTTOMRIGHT", 2, -2)
+        Minimap:SetMaskTexture(Style.WHITE)
+        UI.mapBorder = CreateFrame("Frame", nil, Minimap)
+        UI.mapBorder:EnableMouse(false)
         UI.mapBorder:SetFrameLevel(math.max(0, Minimap:GetFrameLevel()-1))
+        if NineSliceUtil and NineSliceUtil.ApplyLayoutByName then
+            -- The native top piece extends downward. Leave room for it above the map.
+            UI.mapBorder:SetPoint("TOPLEFT", Minimap, "TOPLEFT", 0, 4)
+            UI.mapBorder:SetPoint("BOTTOMRIGHT", Minimap, "BOTTOMRIGHT", 0, 0)
+            NineSliceUtil.ApplyLayoutByName(UI.mapBorder, "SimplePanelTemplate")
+        else
+            UI.mapBorder:SetAllPoints(Minimap)
+            Style.Border(UI.mapBorder)
+        end
     end)
     -- Class resources are drawn by our own widgets; native hierarchy stays intact.
     UI.targetCast = UI.CreateCastBar(UI.target, "target", 260)
@@ -331,7 +342,6 @@ function UI.ApplyLayout()
             ChatFrame1:SetFont(font, 16, flags)
         end)
     end
-    -- Kartenrand ragt 2 Punkte heraus: sichtbare Kante 2 Punkte vom Bildschirmrand.
     UI.Anchor(UI.mapAnchor, "minimap", "TOPRIGHT", -4, -10)
     if MinimapCluster then
         pcall(function()
@@ -344,7 +354,7 @@ function UI.ApplyLayout()
         if not Minimap or Minimap:IsForbidden() then return end
         place(Minimap, "TOPRIGHT", UI.mapAnchor, "TOPRIGHT", 0, 0)
         Minimap:SetSize(240, 240)
-        Minimap:SetMaskTexture(UI.WHITE)
+        Minimap:SetMaskTexture(Style.WHITE)
         -- Originales Blizzard-Tracking an der Minimap positionieren.
         if not (InCombatLockdown and InCombatLockdown()) then
             UI.Foreign(MinimapCluster, function(cluster)

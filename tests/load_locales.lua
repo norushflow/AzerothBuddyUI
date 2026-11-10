@@ -9,6 +9,9 @@ local function loadfile(path)
             assert(originalLoadfile("Locales/enUS.lua"))(name, addon)
             assert(originalLoadfile("Locales/deDE.lua"))(name, addon)
         end
+        if type(addon)=="table" and not addon.Style then
+            assert(originalLoadfile("Style.lua"))(name, addon)
+        end
         return chunk(name, addon, ...)
     end
 end

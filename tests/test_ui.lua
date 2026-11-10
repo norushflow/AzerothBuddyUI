@@ -21,11 +21,15 @@ for _, name in ipairs({"SetGradient", "SetShadowColor", "SetShadowOffset", "SetB
     methods[name]=function() end
 end
 function methods:SetTexCoord(...) self.texcoord={...} end
+function methods:SetHorizTile(value) self.horizTile=value end
+function methods:SetAtlas(value) self.atlas=value end
 function methods:SetTexture(value) self.tex=value end
 function methods:GetTexture() return self.tex end
 function methods:SetStatusBarColor(r,g,b) self.statusColor={r,g,b} end
 function methods:SetAlpha(v) self.alpha=v end
 function methods:SetTextColor(r,g,b,a) self.textColor={r,g,b,a} end
+function methods:SetShadowColor(...) self.shadowColor={...} end
+function methods:SetShadowOffset(...) self.shadowOffset={...} end
 function methods:EnableMouse(v) self.mouse=v end
 function methods:SetPoint(...)
     protected(self); self.point={...}
@@ -82,7 +86,7 @@ function methods:GetRegions()
 end
 function methods:GetParent() return self.parent end
 function methods:GetFont() return "test",12,"" end
-function methods:SetFont(font,size,flags) self.fontSize=size end
+function methods:SetFont(font,size,flags) self.fontPath,self.fontSize,self.fontFlags=font,size,flags;return true end
 function methods:SetCheckedTexture(path) self.checkedTexture=object(nil,self); self.checkedTexture.path=path end
 function methods:SetHighlightTexture(path) self.highlightTexture=object(nil,self); self.highlightTexture.path=path end
 function methods:SetPushedTexture(path) self.pushedTexture=object(nil,self); self.pushedTexture.path=path end
@@ -236,12 +240,38 @@ C_UnitAuras.AddPrivateAuraAnchor=function(args)
     nativeAuraAnchors[#nativeAuraAnchors+1]=args
     return #nativeAuraAnchors
 end
-function methods:SetUnitAura()
+function methods:SetUnitAura(unit, index, filter)
     assert(not combat and not aurasRestricted, "restricted aura tooltip called")
+    self.tooltipAura = {unit, index, filter}
+    self:AddLine("Aura")
+    self:Show()
 end
 GameTooltip=object("GameTooltip");GameMenuFrame=object("GameMenuFrame")
 function methods:SetOwner(owner,anchor) self.owner=owner;self.ownerAnchor=anchor end
-function methods:SetUnit(unit) self.tooltipUnit=unit end
+function methods:GetOwner() return self.owner end
+function methods:IsOwned(owner) return self.owner == owner end
+function methods:NumLines() return self.lines or 0 end
+function methods:ClearLines() self.lines=0 end
+function methods:GetLeftLine(index) return _G[self.name.."TextLeft"..index] end
+function methods:GetRightLine(index) return _G[self.name.."TextRight"..index] end
+function methods:AddLine(text)
+    self.lines = self:NumLines() + 1
+    local name = self.name.."TextLeft"..self.lines
+    local line = _G[name] or object(name, self, "font")
+    line:SetText(text)
+end
+function methods:AddDoubleLine(left, right)
+    self:AddLine(left)
+    local name = self.name.."TextRight"..self.lines
+    local line = _G[name] or object(name, self, "font")
+    line:SetText(right)
+end
+function methods:SetUnit(unit)
+    self.tooltipUnit=unit
+    self:ClearLines()
+    self:AddLine(unit)
+    self:Show()
+end
 function methods:SetBackdropColor(...) self.backdropColor={...} end
 function methods:SetBackdropBorderColor(...) self.borderColor={...} end
 local originalTooltipShow=0
@@ -264,6 +294,7 @@ function ShowUIPanel(f) f:Show() end
 for _,name in ipairs({"FocusFrame","Boss1TargetFrame","Boss2TargetFrame","Boss3TargetFrame","Boss4TargetFrame","Boss5TargetFrame","TargetFrameToT","WarlockPowerFrame","MultiBarRight","MainActionBar","MultiBarBottomLeft","MultiBarBottomRight","ChatFrame1","Minimap","MinimapCluster","BuffFrame","MicroMenuContainer","PlayerFrame","TargetFrame","PartyFrame","CompactPartyFrame","CompactRaidFrameContainer","CompactRaidFrameManager","PetFrame","PlayerCastingBarFrame","PetActionBar","StanceBar","EditModeManagerFrame"}) do object(name,UIParent) end
 for _,frame in ipairs({MainActionBar,MultiBarRight,MultiBarBottomLeft,MultiBarBottomRight,PetActionBar,StanceBar,ChatFrame1,Minimap,MinimapCluster,BuffFrame}) do editModeSystem(frame) end
 Minimap:SetSize(198,198) -- native retail geometry
+NineSliceUtil={ApplyLayoutByName=function(frame, layout) frame.nineSliceLayout=layout end}
 local nativeClockClicks=0
 TimeManagerClockButton=object("TimeManagerClockButton",MinimapCluster,"Button")
 TimeManagerClockButton.scripts.OnClick=function(self,mouse)
@@ -402,6 +433,17 @@ event("PLAYER_REGEN_ENABLED")
 assert(UI.started and UI.chatAnchor and UI.mapAnchor and not UI.Mover,
     "layout started without manual movers")
 assert(TimeManagerClockButton.alpha==0 and TimeManagerClockButton.mouse==false, "native clock hidden; footer remains clickable")
+for _,panel in ipairs({UI.footer, UI.header}) do
+    local r,g,b,a=unpack(panel.background.color)
+    assert(r==0 and g==0 and b==0 and a>0 and a<1,
+        "footer and minimap label use a translucent black background")
+    for _,border in ipairs(panel.borders) do
+        assert(border.color[4]==0, "the strips have no visible border")
+    end
+    for _,region in ipairs({panel:GetRegions()}) do
+        assert(region.atlas~="_UI-Frame-Metal-EdgeTop", "the strips no longer have a metal texture")
+    end
+end
 local calendarClicks, managerToggles=0,0
 GameTimeFrame.scripts.OnClick=function(self,mouse)
     assert(self==GameTimeFrame and mouse=="LeftButton")
@@ -492,7 +534,8 @@ assert(resizeOK,"panel resize performs arithmetic on secret dimensions")
 for _,name in ipairs({"GameTooltip","ItemRefTooltip","ShoppingTooltip1","ShoppingTooltip2","ItemRefShoppingTooltip1","ItemRefShoppingTooltip2"}) do
     local tooltip=_G[name]
     local skin=tooltipSkin(tooltip)
-    assert(skin and skin.background.color[4]==.85 and skin.borders[1].color[1]==.75 and tooltip.NineSlice.alpha==0, "questwatcher tooltip style")
+    assert(skin and skin.background.color[4]==UI.Style.Color.inset[4]
+        and skin.borders[1].color[1]==UI.Style.Color.bronze[1] and tooltip.NineSlice.alpha==0, "native tooltip backdrop style")
 end
 resizingPanel:SetBackdropColor(.03,.35,.45,.8)
 resizingPanel:SetBackdropBorderColor(.1,.2,.3,.4)
@@ -514,12 +557,33 @@ for _,frame in ipairs({party,UI.raid[1]}) do
     frame.scripts.OnLeave(frame)
     combat=false
 end
-UI.player.scripts.OnEnter(UI.player)
-assert(GameTooltip.ownerAnchor=="ANCHOR_RIGHT")
+do
+    UI.player.scripts.OnEnter(UI.player)
+    local tooltip = AzerothBuddyUIDesignTooltip
+    assert(tooltip and tooltip.ownerAnchor=="ANCHOR_RIGHT" and tooltip.tooltipUnit=="player", "unit tooltip must retain native data")
+    assert(tooltip:GetLeftLine(1).fontPath:find("Interface\\AddOns\\AzerothBuddyUI\\",1,true)==1,
+        "unit tooltip retains its own addon typography")
+    assert(not GameTooltip:GetLeftLine(1).fontPath, "native tooltip fonts must remain local to Blizzard")
+    GameTooltip:SetOwner(UIParent,"ANCHOR_RIGHT")
+    GameTooltip:Show()
+    UI.player.scripts.OnLeave(UI.player)
+    assert(not tooltip:IsShown() and GameTooltip:IsShown(), "leave must hide only the owned tooltip")
+    party.scripts.OnEnter(party)
+    assert(tooltip.ownerAnchor=="ANCHOR_NONE" and tooltip.defaultOwner==party, "owned group tooltip keeps native default anchor")
+    party.scripts.OnLeave(party)
+    local setUnit = tooltip.SetUnit
+    tooltip.SetUnit = function() return false end
+    UI.player.scripts.OnEnter(UI.player)
+    assert(GameTooltip:IsOwned(UI.player) and GameTooltip.tooltipUnit=="player", "native fallback when private tooltip declines data")
+    UI.player.scripts.OnLeave(UI.player)
+    tooltip.SetUnit = setUnit
+end
 GameTooltip.forbidden=true
 GameTooltip.tooltipUnit="unchanged"
+combat=true
 party.scripts.OnEnter(party)
 assert(GameTooltip.tooltipUnit=="unchanged")
+combat=false
 GameTooltip.forbidden=false
 combat=true
 pager.alpha=1
@@ -628,6 +692,26 @@ local laterButton=zoneButton()
 UI.ApplyLayout()
 assert(not laterButton.suiExtraSkinned and not laterButton.Icon.all)
 
+-- Unit labels and flat bars match 1.0.7.
+local function checkUnitText(label, size, r, g, b)
+    assert(label.fontPath==(STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF") and label.fontSize==size and label.fontFlags=="")
+    assert(label.shadowColor[1]==0 and label.shadowColor[2]==0 and label.shadowColor[3]==0 and label.shadowColor[4]==.85
+        and label.shadowOffset[1]==1 and label.shadowOffset[2]==-1)
+    assert(label.textColor[1]==r and label.textColor[2]==g and label.textColor[3]==b)
+end
+for _, entry in ipairs({
+    {UI.player,20,19}, {UI.target,20,19}, {UI.targettarget,12,11}, {UI.focus,15,14},
+    {UI.bosses[1],15,14}, {UI.pet,12,11}, {party,10,11}, {UI.raid[40],10,11},
+}) do
+    local frame, nameSize, percentSize=unpack(entry)
+    assert(frame.health.texture==UI.Style.WHITE and frame.power.texture==UI.Style.WHITE,
+        "unit frames use the original flat bar texture")
+    checkUnitText(frame.name, nameSize, .92, .95, 1)
+    checkUnitText(frame.percent, percentSize, .2, 1, .05)
+    checkUnitText(frame.percentWarn, percentSize, 1, .82, .1)
+    checkUnitText(frame.percentLow, percentSize, .92, .12, .09)
+    if frame.role then checkUnitText(frame.role, 11, .92, .95, 1) end
+end
 -- Class colour must reach player units, including target-of-target.
 local savedUnitClass=UnitClass
 UnitClass=function(u)
@@ -843,7 +927,7 @@ for _,candidate in ipairs(objects) do
 end
 assert(StanceBar.width==3*(MultiBarRightButton1.width*MultiBarRightButton1.scale+2)-2 and StanceButton3.abuiQuestSkin)
 assert(ActionButton1.abuiQuestSkin and ActionButton1.checkedTexture, "questwatcher action skin")
-assert(#ActionButton1.abuiQuestSkin.edges==4 and ActionButton1.abuiQuestSkin.edges[1].color[1]==.75)
+assert(#ActionButton1.abuiQuestSkin.edges==4 and ActionButton1.abuiQuestSkin.edges[1].color[1]==UI.Style.Color.border[1])
 local skinCount=#objects
 UI.SkinActionButton(ActionButton1)
 assert(#objects==skinCount,"skin duplicated textures")
@@ -853,6 +937,7 @@ local deferredAction=object(nil,UIParent,"Button")
 combat=true;UI.SkinActionButton(deferredAction);assert(not deferredAction.abuiQuestSkin)
 combat=false;UI.SkinActionButton(deferredAction);assert(deferredAction.abuiQuestSkin)
 assert(not UI.targetCast:IsShown())
+assert(UI.targetCast.fill.texture==UI.Style.WHITE, "cast bars use the original flat fill")
 for _,mode in ipairs({"cast","channel","empower","none"}) do
     castMode=mode
     combat=true
@@ -882,7 +967,7 @@ UI.CreateSoulShards()
 assert(UI.soulShards and #UI.soulShards.segments==5 and rawQuery==true)
 assert(UI.soulShards.parent==UI.player and UI.soulShards.point[3]=="TOPLEFT")
 for i,segment in ipairs(UI.soulShards.segments) do
-    assert(segment.min==(i-1)*10 and segment.max==i*10 and segment.value==secret)
+    assert(segment.min==(i-1)*10 and segment.max==i*10 and segment.value==secret and segment.texture==UI.Style.WHITE)
 end
 combat=true
 UI.soulShards.scripts.OnEvent()
@@ -961,21 +1046,21 @@ testSpec=2;UI.classPower.scripts.OnEvent();assert(not UI.classPower:IsShown())
 testSpec=1;UI.classPower.scripts.OnEvent();assert(UI.classPower:IsShown())
 testClass,testSpec,maximum="EVOKER",1,6
 UnitPower=function() return 2 end
-UI.CreateClassPower();assert(UI.classPower.segments[3].value==2.5)
+UI.CreateClassPower();assert(UI.classPower.segments[3].value==2.5 and UI.classPower.segments[3].texture==UI.Style.WHITE)
 UnitClass,UnitPower,UnitPowerMax,UnitPowerType=savedClass,savedPower,oldMax,oldType
 C_SpecializationInfo.GetSpecialization=oldSpec
 for i,segment in ipairs(UI.holyPower.segments) do
-    assert(segment.min==i-1 and segment.max==i and segment.value==secret)
+    assert(segment.min==i-1 and segment.max==i and segment.value==secret and segment.texture==UI.Style.WHITE)
 end
 for i,container in ipairs(StatusTrackingBarManager.barContainers) do
     assert(container.point[2]==Minimap and container.point[3]=="BOTTOMLEFT")
     assert(container.point[5]==-5-(i-1)*18 and container.width==240 and container.height==14)
     assert(not container:IsShown(), "preserve native availability")
-    assert(container.BarFrameTexture.alpha==0 and container.bars[1].StatusBar.Background.tex==UI.WHITE, "questwatcher progress decoration")
+    assert(container.BarFrameTexture.alpha==0 and container.bars[1].StatusBar.Background.tex==UI.Style.WHITE, "native progress decoration")
     local status=container.bars[1].StatusBar
     assert(status.value==150 and status.min==100 and status.max==200)
     container.bars[1]:Update()
-    assert(status.texture==UI.WHITE, "correct texture survives native updates")
+    assert(status.texture==UI.Style.WHITE, "flat texture survives native progress updates")
     container:SetPoint("BOTTOM",UIParent,"BOTTOM",0,0)
     assert(container.point[2]==Minimap, "native reposition restored")
 end
@@ -987,7 +1072,7 @@ assert(xpBar.ExhaustionLevelFillBar.width==240, "rested extension must clamp at 
 restedXP=nil;restState=2
 UI.PositionProgress()
 assert(not xpBar.ExhaustionLevelFillBar:IsShown() and not xpBar.ExhaustionTick:IsShown())
-assert(xpBar.StatusBar.texture==UI.WHITE and xpBar.StatusBar.statusColor[1]==.55)
+assert(xpBar.StatusBar.texture==UI.Style.WHITE and xpBar.StatusBar.statusColor[1]==.55)
 restedXP=400;restState=1
 combat=true
 xpBar.ExhaustionTick:UpdateTickPosition()
@@ -1054,6 +1139,15 @@ assert(UI.raidPreview.point[1]=="TOP" and UI.raidPreview.point[2]==UI.raidAnchor
 assert(not UI.raidPreview.title and not UI.raidPreview.scripts.OnDragStart
     and UI.raidPreview.kind=="Frame", "preview must contain only cells, no movable window")
 assert(UI.raidPreview.cells[20]:IsShown() and not UI.raidPreview.cells[21]:IsShown())
+local previewLabels=0
+for _, region in ipairs(objects) do
+    if region.kind=="font" and region.parent.parent==UI.raidPreview.cells[1] then
+        if region.format=="Raid %02d" then checkUnitText(region, 10, .92, .95, 1) end
+        if region.format=="%d%%" then checkUnitText(region, 11, .2, 1, .05) end
+        previewLabels=previewLabels+1
+    end
+end
+assert(previewLabels==2, "raid preview has name and health labels")
 UI.raidPreview.scripts.OnEvent(UI.raidPreview,"PLAYER_REGEN_DISABLED")
 assert(not UI.raidPreview:IsShown())
 combat=true
@@ -1089,6 +1183,9 @@ do
     UI.ApplyLayout = apply
 end
 assert(Minimap.width==240 and MinimapCluster.scale==1, "native map dimensions preserved")
+assert(UI.mapBorder.parent==Minimap and UI.mapBorder.point[2]==Minimap
+    and UI.mapBorder.nineSliceLayout=="SimplePanelTemplate" and UI.mapBorder.mouse==false,
+    "native metal trim remains decorative")
 assert(BuffFrame.point[2]==Minimap and BuffFrame.point[3]=="TOPLEFT")
 assert(MinimapCluster.Tracking.parent==MinimapCluster and MinimapCluster.Tracking.shown,
     "native tracking must stay native")
@@ -1119,9 +1216,6 @@ assert(UI.target.percentWarn and UI.target.percentLow)
 assert(UI.target.percentWarn.values[1]==secret and UI.target.percentLow.values[1]==secret)
 assert(UI.target.percent.alpha==secret and UI.target.percentWarn.alpha==secret
     and UI.target.percentLow.alpha==secret, "percent colour must use the native curve result")
-assert(UI.target.percent.textColor[1]<.3 and UI.target.percent.textColor[2]==1)
-assert(UI.target.percentWarn.textColor[1]==1 and UI.target.percentWarn.textColor[2]>.8)
-assert(UI.target.percentLow.textColor[1]>.9 and UI.target.percentLow.textColor[2]<.2)
 assert(UI.targettarget.percentLow.fontSize==11 and UI.focus.percentWarn.fontSize==14
     and UI.bosses[1].percentLow.fontSize==14, "colour labels must share the percent font")
 assert(UI.raid[40].percentWarn and UI.raid[40].percentLow.alpha==secret)
@@ -1226,10 +1320,19 @@ end
 local tooltipOwner=GameTooltip.SetOwner
 GameTooltip.forbidden=true
 GameTooltip.SetOwner=function() error("forbidden tooltip was touched") end
-for _,obj in ipairs(objects) do
-    if obj.parent==auditHost and obj.scripts.OnEnter then
-        assert(pcall(obj.scripts.OnEnter,obj));assert(pcall(obj.scripts.OnLeave,obj))
+do
+    local tooltip = AzerothBuddyUIDesignTooltip
+    local checked = 0
+    for _,obj in ipairs(objects) do
+        if obj.parent==auditHost and obj.scripts.OnEnter then
+            obj.scripts.OnEnter(obj)
+            assert(tooltip:IsOwned(obj) and tooltip:IsShown() and tooltip.tooltipAura[2] > 0)
+            obj.scripts.OnLeave(obj)
+            assert(not tooltip:IsShown())
+            checked = checked + 1
+        end
     end
+    assert(checked > 0, "owned aura tooltip fixture")
 end
 GameTooltip.forbidden=false;GameTooltip.SetOwner=tooltipOwner
 print("PASS: aura burst coalescing, native bar isolation/recovery and aura tooltip guard")

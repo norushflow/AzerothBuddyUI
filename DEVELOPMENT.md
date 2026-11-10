@@ -10,4 +10,6 @@ Benötigt werden Bash und LuaJIT, für ZIPs zusätzlich zip und unzip. Die TOC d
 
 Vor einer Veröffentlichung Login, gespeicherte Einstellungen, Bedienung, Kampf, Gruppen/Raid und Taint im Zielclient prüfen.
 
+`Style.lua` ist in AzerothBuddy und AzerothBuddyUI identisch. Änderungen an Farben, Texturen, Schrift und gemeinsamen Steuerelementen in beide Kopien übernehmen. Expressway-Dateien für den persönlichen Gebrauch gehören in das installierte Addon.
+
 Das Setup aktualisiert ausschließlich das benannte Layout `AzerothBuddyUI`. `tests/test_edit_layout.lua` und `tests/test_welcome.lua` prüfen Auswahl, Abbruch, Schutz anderer Layouts und den Versionswechsel. [Blizzard-Quellspiegel zum Edit Mode](https://github.com/Gethe/wow-ui-source/blob/live/Interface/AddOns/Blizzard_EditMode/Shared/EditModeManager.lua).

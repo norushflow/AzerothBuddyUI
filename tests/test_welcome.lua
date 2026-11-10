@@ -4,10 +4,15 @@ local frames, timers = {}, {}
 local combat, reloads, imports, bars = false, 0, 0, 0
 local allowImport, allowBars = true, true
 local methods = {}
-for _, method in ipairs({"SetPoint", "SetSize", "SetText", "SetWidth", "SetWordWrap", "SetTextColor", "SetFrameStrata", "EnableMouse", "SetClampedToScreen", "RegisterEvent"}) do
+for _, method in ipairs({"SetSize", "SetWidth", "SetHeight", "SetWordWrap", "SetTextColor",
+    "SetFrameStrata", "EnableMouse", "SetClampedToScreen", "RegisterEvent", "SetAllPoints", "SetTexture",
+    "SetColorTexture", "SetShadowColor", "SetShadowOffset", "ClearAllPoints", "SetDrawLayer"}) do
     methods[method] = function() end
 end
+function methods:SetPoint(...) self.point={...} end
+function methods:SetVertexColor(...) self.tint={...} end
 function methods:SetText(text) self.text=text end
+function methods:SetFont(path, size) self.fontPath, self.fontSize = path, size; return true end
 function methods:SetScript(event, callback) self[event] = callback end
 function methods:Show() self.shown = true end
 function methods:Hide() self.shown = false end
@@ -15,6 +20,19 @@ function CreateFrame()
     local frame = setmetatable({}, {__index=methods})
     frames[#frames+1] = frame
     return frame
+end
+methods.CreateTexture = CreateFrame
+methods.CreateFontString = CreateFrame
+for _, state in ipairs({"Normal", "Pushed", "Disabled"}) do
+    methods["Set"..state.."Atlas"] = function(self, atlas)
+        self[state] = CreateFrame()
+        self[state].atlas = atlas
+    end
+    methods["Get"..state.."Texture"] = function(self) return self[state] end
+end
+function methods:GetFontString()
+    self.label = self.label or CreateFrame()
+    return self.label
 end
 UIParent = {}
 SlashCmdList = {}
@@ -24,8 +42,6 @@ C_Timer = {After=function(_, callback) timers[#timers+1] = callback end}
 assert(loadfile("Core.lua"))("AzerothBuddyUI", UI)
 local toc=assert(io.open("AzerothBuddyUI.toc","r")):read("*a")
 assert(toc:match("## Version: ([^\r\n]+)")==UI.VERSION, "setup version must match TOC")
-UI.Panel = CreateFrame
-UI.Text = CreateFrame
 UI.Message = function() end
 UI.CompleteEditLayoutSetup = function(callback) callback() end
 UI.EnableEditLayout = function() imports = imports + 1; return allowImport end
@@ -41,6 +57,13 @@ assert(not UI.welcome and (not AzerothBuddyUICharDB or not AzerothBuddyUICharDB.
 combat = false
 events.OnEvent(events, "PLAYER_REGEN_ENABLED")
 assert(UI.welcome.shown and AzerothBuddyUICharDB.welcomeVersion, "welcome shown once after combat")
+assert(UI.welcome.setupButton.label.fontPath == "Interface\\AddOns\\AzerothBuddyUI\\Media\\Expressway.ttf")
+assert(UI.welcome.description.fontPath == UI.welcome.setupButton.label.fontPath and UI.welcome.description.fontSize == 13)
+local fill = UI.welcome.setupButton.Normal
+assert(fill.atlas == "UI-HUD-CoolDownManager-Bar" and fill.tint[1] == UI.Style.Color.button[1])
+for _,frame in ipairs(frames) do
+    if frame.text == UI.L["AzerothBuddyUI einrichten"] then assert(frame.point[5] == -25) end
+end
 assert(imports == 0 and bars == 0 and reloads == 0, "showing must not configure")
 local warning=false
 for _,frame in ipairs(frames) do if frame.text=="Vorsicht: Layout wird überschrieben!" then warning=true end end
