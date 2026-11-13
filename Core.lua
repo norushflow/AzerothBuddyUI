@@ -1,7 +1,7 @@
 local _, UI = ...
 local L = UI.L
 local Style = UI.Style
-UI.VERSION = "1.1.1"
+UI.VERSION = "1.1.2"
 -- Setup acknowledgement belongs to this character, not the account layout.
 function UI.GetCharacterSettings()
     AzerothBuddyUICharDB = AzerothBuddyUICharDB or {}
@@ -60,8 +60,9 @@ local function anchorQuestDialog(frame)
             return
         end
         local inset = -250 / dialog:GetScale()
+        local horizontalOffset = inset - dialog:GetWidth()
         dialog:ClearAllPoints()
-        dialog:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", inset - dialog:GetWidth() / 2, inset)
+        dialog:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", horizontalOffset, inset)
         questAnchorPending = nil
     end)
     anchoringQuest = false
@@ -185,13 +186,14 @@ function UI.Start()
     UI.ApplyLayout()
     UI.started = true
     UI.Foreign(QuestFrame, function(dialog)
+        dialog:HookScript("OnShow", anchorQuestDialog)
         -- Blizzard also positions the panel again while it is already open.
         hooksecurefunc(dialog, "SetPoint", anchorQuestDialog)
         anchorQuestDialog(dialog)
     end)
     UI.InstallEquipment()
     raidState = (IsInRaid and IsInRaid()) and true or false
-    UI.Message(L["Version 1.1.1 geladen. /abui für Leisten 1–4."])
+    UI.Message(L["Version 1.1.2 geladen. /abui für Leisten 1–4."])
 end
 -- Nur auf ausdrücklichen Slash-Aufruf Einstellungen ändern, nie beim Start.
 function UI.ConfigureActionBars()

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.2
+
+- Move the quest dialog another half-window width left and apply the anchor as the dialog opens.
+
 ## 1.1.1
 
 - Anchor the Blizzard quest dialog in the upper-right area for accepting quests, checking progress, and claiming rewards.

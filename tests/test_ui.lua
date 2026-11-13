@@ -412,6 +412,10 @@ end
 local questDialog = object("QuestFrame", UIParent)
 questDialog:Hide()
 function questDialog:GetScale() return self.scale end
+function questDialog:Show()
+    methods.Show(self)
+    if self.scripts.OnShow then self.scripts.OnShow(self) end
+end
 function questDialog:SetPoint(point, ...)
     if point == "TOPLEFT" then
         -- Emulate the secure Blizzard panel manager, including during combat.
@@ -447,16 +451,17 @@ do
     local function assertQuestAnchor()
         local point, relative, relativePoint, x, y = unpack(questDialog.point)
         assert(point == "TOPRIGHT" and relative == UIParent and relativePoint == "TOPRIGHT"
-            and x == -250 / questDialog.scale - questDialog:GetWidth() / 2
+            and x == -250 / questDialog.scale - questDialog:GetWidth()
             and y * questDialog.scale == -250,
-            "quest dialog must sit half its width left of the 250 UI pixel inset")
+            "quest dialog must sit one window width left of the 250 UI pixel inset")
     end
     assertQuestAnchor()
     for _, scale in ipairs({1, 1.25}) do
         questDialog:Hide()
         questDialog.scale = scale
         questDialog.width = 300 * scale
-        questDialog:SetPoint("TOPLEFT", "UIParent", "TOPLEFT", 16, -100)
+        -- Also cover native anchoring that bypasses the Lua method hook.
+        methods.SetPoint(questDialog, "TOPLEFT", "UIParent", "TOPLEFT", 16, -100)
         questDialog:Show()
         assertQuestAnchor()
     end
