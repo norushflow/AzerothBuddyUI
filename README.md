@@ -1,4 +1,4 @@
-# AzerothBuddyUI 1.1.0
+# AzerothBuddyUI 1.1.1
 
 <p align="center"><img src="branding/icon-400.png" alt="AzerothBuddyUI" width="160" height="160"></p>
 

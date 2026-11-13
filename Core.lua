@@ -1,7 +1,7 @@
 local _, UI = ...
 local L = UI.L
 local Style = UI.Style
-UI.VERSION = "1.1.0"
+UI.VERSION = "1.1.1"
 -- Setup acknowledgement belongs to this character, not the account layout.
 function UI.GetCharacterSettings()
     AzerothBuddyUICharDB = AzerothBuddyUICharDB or {}
@@ -50,6 +50,23 @@ function UI.Anchor(frame, key, point, x, y, relative, relativePoint)
         frame:SetPoint(point, relative or UIParent, relativePoint or point, x, y)
     end
 end
+local questAnchorPending, anchoringQuest
+local function anchorQuestDialog(frame)
+    if anchoringQuest then return end
+    anchoringQuest = true
+    UI.Foreign(frame, function(dialog)
+        if InCombatLockdown() and dialog:IsProtected() then
+            questAnchorPending = true
+            return
+        end
+        local inset = -250 / dialog:GetScale()
+        dialog:ClearAllPoints()
+        dialog:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", inset - dialog:GetWidth() / 2, inset)
+        questAnchorPending = nil
+    end)
+    anchoringQuest = false
+end
+
 local events = CreateFrame("Frame")
 for _, event in ipairs({
     "PLAYER_LOGIN", "PLAYER_REGEN_ENABLED",
@@ -98,6 +115,9 @@ events:SetScript("OnEvent", function(_, event)
         -- Nachgeladenes Blizzard_EditMode: Schließen-Hook einmalig nachziehen.
         if UI.started then UI.WatchEditMode() end
     elseif UI.started and not InCombatLockdown() then
+        if event == "PLAYER_REGEN_ENABLED" and questAnchorPending then
+            anchorQuestDialog(QuestFrame)
+        end
         if event == "GROUP_ROSTER_UPDATE" then
             UI.QueueNativeGroupMask()
             UI.PositionRaid()
@@ -164,9 +184,14 @@ function UI.Start()
     UI.CreateLayout()
     UI.ApplyLayout()
     UI.started = true
+    UI.Foreign(QuestFrame, function(dialog)
+        -- Blizzard also positions the panel again while it is already open.
+        hooksecurefunc(dialog, "SetPoint", anchorQuestDialog)
+        anchorQuestDialog(dialog)
+    end)
     UI.InstallEquipment()
     raidState = (IsInRaid and IsInRaid()) and true or false
-    UI.Message(L["Version 1.1.0 geladen. /abui für Leisten 1–4."])
+    UI.Message(L["Version 1.1.1 geladen. /abui für Leisten 1–4."])
 end
 -- Nur auf ausdrücklichen Slash-Aufruf Einstellungen ändern, nie beim Start.
 function UI.ConfigureActionBars()

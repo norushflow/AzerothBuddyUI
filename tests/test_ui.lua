@@ -409,6 +409,18 @@ function WarlockPowerFrame:GetUnit()
     local unit = self.unit or self:GetParent():GetParent().unit
     return unit or "player"
 end
+local questDialog = object("QuestFrame", UIParent)
+questDialog:Hide()
+function questDialog:GetScale() return self.scale end
+function questDialog:SetPoint(point, ...)
+    if point == "TOPLEFT" then
+        -- Emulate the secure Blizzard panel manager, including during combat.
+        self.point = {point, ...}
+    else
+        methods.SetPoint(self, point, ...)
+    end
+end
+questDialog:SetPoint("TOPLEFT", "UIParent", "TOPLEFT", 16, -100)
 local UI={}
 for _,file in ipairs({"Core.lua","EditLayout.lua","Tooltips.lua","Equipment.lua","GroupDebuffs.lua","Units.lua","Progress.lua","Castbars.lua","ClassPower.lua","Layout.lua","RaidTest.lua"}) do assert(loadfile(""..file))("AzerothBuddyUI",UI) end
 local dispatcher
@@ -418,6 +430,7 @@ local function event(e) dispatcher.scripts.OnEvent(dispatcher,e) end
 AzerothBuddyUI={enabled=false,positions={group={x=960,y=330},player={x=200,y=100},target={x=1400,y=100},actions1={x=900,y=84}}}
 event("PLAYER_LOGIN")
 assert(not UI.started,"disabled addon changed layout")
+assert(questDialog.point[1] == "TOPLEFT", "disabled addon moved the quest dialog")
 AzerothBuddyUI.enabled=true
 combat=true;event("PLAYER_LOGIN")
 assert(UI.pendingStart and not UI.started,"combat startup not deferred")
@@ -430,6 +443,34 @@ if arg and arg[1]=="startup-failure" then
     return
 end
 event("PLAYER_REGEN_ENABLED")
+do
+    local function assertQuestAnchor()
+        local point, relative, relativePoint, x, y = unpack(questDialog.point)
+        assert(point == "TOPRIGHT" and relative == UIParent and relativePoint == "TOPRIGHT"
+            and x == -250 / questDialog.scale - questDialog:GetWidth() / 2
+            and y * questDialog.scale == -250,
+            "quest dialog must sit half its width left of the 250 UI pixel inset")
+    end
+    assertQuestAnchor()
+    for _, scale in ipairs({1, 1.25}) do
+        questDialog:Hide()
+        questDialog.scale = scale
+        questDialog.width = 300 * scale
+        questDialog:SetPoint("TOPLEFT", "UIParent", "TOPLEFT", 16, -100)
+        questDialog:Show()
+        assertQuestAnchor()
+    end
+    combat = true
+    questDialog:SetPoint("TOPLEFT", "UIParent", "TOPLEFT", 16, -100)
+    assertQuestAnchor()
+    questDialog.secure = true
+    questDialog:SetPoint("TOPLEFT", "UIParent", "TOPLEFT", 16, -100)
+    assert(questDialog.point[1] == "TOPLEFT", "protected anchor must wait until combat ends")
+    combat = false
+    event("PLAYER_REGEN_ENABLED")
+    assertQuestAnchor()
+    questDialog.secure = nil
+end
 assert(UI.started and UI.chatAnchor and UI.mapAnchor and not UI.Mover,
     "layout started without manual movers")
 assert(TimeManagerClockButton.alpha==0 and TimeManagerClockButton.mouse==false, "native clock hidden; footer remains clickable")

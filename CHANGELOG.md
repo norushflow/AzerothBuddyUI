@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1
+
+- Anchor the Blizzard quest dialog in the upper-right area for accepting quests, checking progress, and claiming rewards.
+
 ## 1.1.0
 
 - Refresh the setup window with a Warcraft-style frame, brown buttons and a title below the metal trim.
