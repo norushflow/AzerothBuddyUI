@@ -1,13 +1,11 @@
 # AzerothBuddyUI
 
-Retail / Midnight. Einstieg in `Core.lua`, `Layout.lua` oder das betreffende UI-Modul. Natives Tracking mit Originalmenü, Klick und Tooltip erhalten. CVars werden über `/abui` bewusst gesetzt.
+Retail / Midnight. Einstieg in `Core.lua` oder `Layout.lua`. Natives Tracking mit Menü, Klick und Tooltip erhalten. CVars werden bewusst über `/abui` gesetzt.
 
-- `git status --short` und TOC zuerst prüfen. Nur relevante Dateien und Tests lesen. Lokale Änderungen erhalten und Diffs prüfen.
-- `./tools/check.sh --quick` für gezielte Iteration, `./tools/check.sh --full` für den Abschluss. Bei Fehlern oder Bedarf `--debug` verwenden.
-- SavedVariables, Migrationen, Slash-Befehle und Addon-Unabhängigkeit erhalten. Secret Values vor Lua-Operationen prüfen und bestehende Guards für Kampf, geschützte und verbotene Frames beibehalten.
-- Keine neuen dauerhaften Ticker, automatischen CVar-Änderungen oder Abhängigkeiten ohne Auftrag. UI, Kampf und Taint im Zielclient prüfen.
-- Release-Ablauf in `DEVELOPMENT.md`. Version, Push, Tag und Veröffentlichung nur nach ausdrücklichem Auftrag. Veröffentlichungsziel `norushflow/AzerothBuddyUI`.
-- `TEMP/UEBERGABE.md` hält lokal Ziel, Änderungen, Prüfstatus und nächsten Schritt fest.
+- Mit Git-Status, TOC und relevantem Diff beginnen. Bestehende Änderungen erhalten.
+- Gezielt mit `./tools/check.sh --quick` prüfen; der ZIP-Bau führt den Volltest aus. Gemeinsame Regeln im übergeordneten `AGENTS.md` beachten.
+- SavedVariables, Migrationen, Slash-Befehle und Addon-Unabhängigkeit erhalten. Secret Values sowie geschützte und verbotene Frames wie bisher absichern. Neue dauerhafte Ticker, automatische CVar-Änderungen und Abhängigkeiten brauchen einen Auftrag.
+- [Entwicklung und Release](DEVELOPMENT.md) bei Bedarf lesen. Veröffentlichung nur nach ausdrücklichem Auftrag.
+- Nach jedem abgeschlossenen Testlauf die Antwort mit dem kopierbaren Fedora-Befehl abschließen. Für den Spieltest den Befehl aus `DEVELOPMENT.md` auch nach erfolgreicher Installation angeben.
 
-Setup bestätigt je Charakter und Version. Erst der sichtbare Setup-Klick überschreibt die eigene Vorlage. Andere Layouts erhalten. `EditMode.Exit` verwenden und Layoutarbeit außerhalb von Blizzards Reset ausführen. Der Abschluss fordert zum manuellen `/reload` auf.
-Nach lieferbaren Änderungen ein lokales Installationspaket erstellen. Ältere Pakete bei beauftragter Bereinigung außerhalb des Repositories archivieren.
+Das Setup aktualisiert nach sichtbarer Bestätigung ausschließlich das Layout `AzerothBuddyUI`. `EditMode.Exit` verwenden und die Layoutarbeit außerhalb von Blizzards Reset ausführen. Abschluss per manuellem `/reload`. `Style.lua` mit AzerothBuddy abstimmen.

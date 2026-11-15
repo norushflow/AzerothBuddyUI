@@ -3,8 +3,9 @@
 ## Notes: Unit frames, action bars, minimap, auras and class resources.
 ## Notes-deDE: Einheitentafeln, Leisten, Minimap, Auren und Klassenressourcen.
 ## Author: norushflow
-## Version: 1.1.2
+## Version: 1.1.3
 ## X-Curse-Project-ID: 1791306
+## X-Wago-ID: 96EX98Ng
 ## IconTexture: Interface\AddOns\AzerothBuddyUI\Media\BuddyIcon.tga
 ## SavedVariables: AzerothBuddyUI
 ## SavedVariablesPerCharacter: AzerothBuddyUICharDB

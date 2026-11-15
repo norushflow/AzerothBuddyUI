@@ -237,6 +237,13 @@ C_UnitAuras.AddPrivateAuraAnchor=function(args)
         assert(type(args.parent[key])=="number", "missing native container setting: "..key)
     end
     assert(args.parent["max-debuffs"]==3 and args.parent["max-buffs"]==0)
+    local host, icon = args.parent, args.iconInfo
+    assert(host.scale > 0 and host.scale < 1 and host.all == host.parent,
+        "smaller native aura text must retain the full group frame host")
+    assert(host["debuff-size"] * host.scale == 10 and icon.iconWidth * host.scale == 10
+        and icon.iconHeight * host.scale == 10 and icon.borderScale * host.scale == .6
+        and host["debuff-border-scale"] * host.scale == .6 and host["power-bar-used-height"] * host.scale == 2,
+        "text scaling must preserve debuff icon/border size and power bar clearance")
     nativeAuraAnchors[#nativeAuraAnchors+1]=args
     return #nativeAuraAnchors
 end
@@ -1254,6 +1261,44 @@ assert(MultiBarBottomRight.point[2].point[5]==81)
 MainActionBar:UpdateGridLayout()
 assert(ActionButton2.container.scale==1, "restore layout after native grid updates")
 assert(UI.player.health.value==secret and UI.player.health.max==secret)
+do
+    local originals, counts = {}, {health=0, power=0}
+    for name, kind in pairs({UnitHealth='health', UnitHealthMax='health', UnitHealthPercent='health',
+        UnitPower='power', UnitPowerMax='power'}) do
+        local fn = _G[name]
+        originals[name] = fn
+        _G[name] = function(...)
+            counts[kind] = counts[kind]+1
+            return fn(...)
+        end
+    end
+    local wasCombat = combat
+    combat = true
+    local function check(frame, event, health, power)
+        counts.health, counts.power = 0, 0
+        frame.scripts.OnEvent(frame, event, frame.unit)
+        assert(counts.health==health and counts.power==power,
+            event..' on '..frame.unit..': unexpected health/power queries '..counts.health..'/'..counts.power)
+    end
+    for _, frame in ipairs({UI.player, UI.target, UI.focus, UI.bosses[1], UI.pet, AzerothBuddyUI_party1Group, UI.raid[1], UI.raid[40]}) do
+        check(frame, 'UNIT_HEALTH', 6, 0)
+        check(frame, 'UNIT_MAXHEALTH', 6, 2)
+        check(frame, 'UNIT_POWER_UPDATE', 0, 2)
+        check(frame, 'UNIT_MAXPOWER', 6, 2)
+        check(frame, 'UNIT_DISPLAYPOWER', 6, 2)
+        check(frame, 'UNIT_NAME_UPDATE', 6, 2)
+        check(frame, 'UNIT_CONNECTION', 6, 2)
+        check(frame, 'GROUP_ROSTER_UPDATE', 6, 2)
+        check(frame, 'PLAYER_ENTERING_WORLD', 6, 2)
+    end
+    check(UI.target, 'PLAYER_TARGET_CHANGED', 6, 2)
+    check(UI.focus, 'PLAYER_FOCUS_CHANGED', 6, 2)
+    check(UI.targettarget, 'UNIT_POWER_UPDATE', 6, 2)
+    check(UI.targettarget, 'UNIT_HEALTH', 6, 2)
+    for name, fn in pairs(originals) do _G[name] = fn end
+    combat = wasCombat
+    print('PASS: unit events query health/power selectively; identity changes and targettarget refresh fully')
+end
 assert(UI.target.name.text==secret and UI.target.percent.values[1]==secret,
     "protected percent value must reach the widget")
 -- Colour thresholds run natively: the addon only forwards the secret curve
