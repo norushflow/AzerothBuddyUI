@@ -1,22 +1,25 @@
 local addonName, ns = ...
 
--- Keep this file identical in both Retail addons. Each loads its own copy.
+-- Central styling for AzerothBuddyUI; never change shared Blizzard font objects.
 local Style = {}
 ns.Style = Style
 
 local Color = {
-    background = {.048, .035, .024, .96},
-    inset = {.026, .021, .016, .93},
-    header = {.20, .12, .055, .44},
-    border = {.56, .40, .22, .83},
-    bronze = {.68, .49, .28, 1},
-    gold = {1, .82, .44, 1},
-    text = {.96, .91, .81, 1},
-    muted = {.76, .70, .61, 1},
-    disabled = {.58, .54, .48, 1},
-    button = {.31, .24, .16, 1},
-    highlight = {1, .74, .35, .18},
-    selected = {1, .75, .37, .9},
+    background = {.075, .075, .075, .94},
+    inset = {.045, .045, .045, .93},
+    header = {.12, .12, .12, .96},
+    border = {.32, .32, .32, .85},
+    bronze = {.32, .32, .32, .85},
+    gold = {.94, .94, .94, 1},
+    text = {.90, .90, .90, 1},
+    muted = {.65, .65, .65, 1},
+    disabled = {.45, .45, .45, 1},
+    button = {.16, .16, .16, .96},
+    pushed = {.09, .09, .09, .96},
+    cooldown = {0, 0, 0, .8},
+    highlight = {1, 1, 1, .12},
+    selected = {.75, .75, .75, .9},
+    strip = {.075, .075, .075, .65},
     success = {.51, .84, .44, 1},
     danger = {1, .45, .36, 1},
     info = {.55, .80, .94, 1},
@@ -25,9 +28,6 @@ local Color = {
 Style.Color = Color
 Style.Spacing = {small = 4, gap = 8, inset = 12, panel = 16}
 Style.WHITE = "Interface\\Buttons\\WHITE8X8"
-local ROCK = "Interface\\FrameGeneral\\UI-Background-Rock"
-local MARBLE = "Interface\\FrameGeneral\\UI-Background-Marble"
-local NAMEPLATE_BAR = "UI-HUD-CoolDownManager-Bar"
 local sizes = {title = 20, heading = 15, body = 13, small = 11, button = 13, hud = 12, tooltip = 13}
 local expressway = "Interface\\AddOns\\" .. addonName .. "\\Media\\Expressway.ttf"
 local fontPath
@@ -72,15 +72,6 @@ local function fill(frame, layer, subLevel, color)
     local texture = frame:CreateTexture(nil, layer, nil, subLevel)
     texture:SetAllPoints(frame)
     texture:SetColorTexture(unpack(color))
-    return texture
-end
-
-local function stone(frame, path)
-    local texture = frame:CreateTexture(nil, "BACKGROUND", nil, -6)
-    texture:SetAllPoints(frame)
-    texture:SetTexture(path)
-    if texture.SetHorizTile then texture:SetHorizTile(true) end
-    if texture.SetVertTile then texture:SetVertTile(true) end
     return texture
 end
 
@@ -130,23 +121,11 @@ end
 function Style.Window(frame, headerHeight, opacity)
     if frame.SetBackdrop then frame:SetBackdrop(nil) end
     headerHeight = headerHeight or 38
-    local rock = stone(frame, ROCK)
-    local background = Color.background
-    local tint = fill(frame, "BACKGROUND", -5, background)
-    tint:SetColorTexture(background[1], background[2], background[3], opacity or .86)
-    local left, top, right = 3, 3, -3
-    if NineSliceUtil and NineSliceUtil.ApplyLayoutByName then
-        NineSliceUtil.ApplyLayoutByName(frame, "ButtonFrameTemplateNoPortrait")
-        -- Use the same background insets as Blizzard's DefaultPanelTemplate.
-        left, top, right = 6, 21, -2
-        for _, texture in ipairs({rock, tint}) do
-            texture:ClearAllPoints()
-            texture:SetPoint("TOPLEFT", frame, "TOPLEFT", left, -top)
-            texture:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", right, 2)
-        end
-    else
-        Style.Border(frame)
+    Style.Panel(frame)
+    if opacity then
+        frame:SetBackdropColor(Color.background[1], Color.background[2], Color.background[3], opacity)
     end
+    local left, top, right = 1, 1, -1
     local header = frame:CreateTexture(nil, "BACKGROUND", nil, -4)
     header:SetPoint("TOPLEFT", frame, "TOPLEFT", left, -top)
     header:SetPoint("TOPRIGHT", frame, "TOPRIGHT", right, -top)
@@ -160,20 +139,20 @@ end
 
 function Style.Inset(frame)
     if frame.SetBackdrop then frame:SetBackdrop(nil) end
-    stone(frame, MARBLE)
     Style.Panel(frame)
     frame:SetBackdropColor(unpack(Color.inset))
     return frame
 end
 
 local buttonFonts
-local function nameplateFill(button, texture, r, g, b)
-    if not texture then return end
+local function buttonTexture(button, state, color)
+    button["Set" .. state .. "Texture"](button, Style.WHITE)
+    local texture = button["Get" .. state .. "Texture"](button)
+    texture:SetVertexColor(unpack(color))
+    texture:SetTexCoord(0, 1, 0, 1)
     texture:ClearAllPoints()
-    texture:SetPoint("TOPLEFT", button, "TOPLEFT", 5, -4)
-    texture:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -5, 4)
-    texture:SetDrawLayer("BACKGROUND", 1)
-    texture:SetVertexColor(r, g, b)
+    texture:SetPoint("TOPLEFT", button, "TOPLEFT", 1, -1)
+    texture:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -1, 1)
 end
 
 function Style.Button(button)
@@ -194,34 +173,23 @@ function Style.Button(button)
     elseif button.GetFontString then
         Style.Font(button:GetFontString(), "button", "OUTLINE", Color.text)
     end
-    -- Keep the panel template's rim and hover while replacing the red fill.
     for _, key in ipairs({"Left", "Middle", "Right"}) do
         local piece = button[key]
-        if piece and type(piece) ~= "function" then
-            piece:SetVertexColor(.84, .72, .57)
-            piece:SetDesaturated(true)
-        end
+        if piece and type(piece) ~= "function" then piece:Hide() end
     end
-    if button.SetNormalAtlas then
-        button:SetNormalAtlas(NAMEPLATE_BAR)
-        button:SetPushedAtlas(NAMEPLATE_BAR)
-        button:SetDisabledAtlas(NAMEPLATE_BAR)
-        nameplateFill(button, button:GetNormalTexture(), unpack(Color.button, 1, 3))
-        nameplateFill(button, button:GetPushedTexture(), .23, .17, .11)
-        nameplateFill(button, button:GetDisabledTexture(), .19, .18, .17)
-    end
+    buttonTexture(button, "Normal", Color.button)
+    buttonTexture(button, "Pushed", Color.pushed)
+    buttonTexture(button, "Disabled", Color.inset)
+    buttonTexture(button, "Highlight", Color.highlight)
+    Style.Border(button)
     return button
 end
 
 function Style.Close(button)
-    -- The glyph is part of Blizzard's close-button atlas. Keep its shape and native states.
-    for _, method in ipairs({"GetNormalTexture", "GetPushedTexture", "GetDisabledTexture", "GetHighlightTexture"}) do
-        local texture = button[method] and button[method](button)
-        if texture and type(texture) ~= "function" then
-            texture:SetDesaturated(true)
-            texture:SetVertexColor(.84, .72, .57)
-        end
-    end
+    Style.Button(button)
+    local glyph = Style.Text(button, 18, Color.text)
+    glyph:SetPoint("CENTER", button, "CENTER", 0, 1)
+    glyph:SetText("×")
     return button
 end
 
@@ -240,8 +208,7 @@ function Style.Icon(button)
     button.styleSelection = false
     local background = button:CreateTexture(nil, "BACKGROUND", nil, -5)
     background:SetAllPoints(button)
-    background:SetAtlas(NAMEPLATE_BAR)
-    background:SetVertexColor(unpack(Color.button))
+    background:SetColorTexture(unpack(Color.button))
     Style.Border(button, Color.bronze, "OVERLAY", 2)
     if not button:GetHighlightTexture() then
         button:SetHighlightTexture(Style.WHITE, "ADD")
@@ -252,6 +219,12 @@ function Style.Icon(button)
 end
 
 function Style.Check(button)
+    Style.Button(button)
+    local checked = button:GetCheckedTexture()
+    if checked then
+        checked:SetDesaturated(true)
+        checked:SetVertexColor(unpack(Color.selected))
+    end
     local label = button.Text or button.text
     if label and type(label) ~= "function" then Style.Font(label, "body", nil, Color.text) end
     return button

@@ -2,12 +2,11 @@ local _, UI = ...
 local Style = UI.Style
 local Color = Style.Color
 local frames = {}
-local unitFont = STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF"
 
--- Keep the unit labels' font and shadow from 1.0.7, including the raid preview.
+-- Use the central font preference while retaining label sizes and health colours.
 function UI.UnitText(parent, size, point, x, y, r, g, b)
     local text = parent:CreateFontString(nil, "OVERLAY")
-    text:SetFont(unitFont, size, "")
+    Style.Font(text, size, "")
     text:SetShadowColor(0, 0, 0, .85)
     text:SetShadowOffset(1, -1)
     text:SetPoint(point, parent, point, x, y)

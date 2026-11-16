@@ -105,6 +105,7 @@ events:SetScript("OnEvent", function(_, event)
         end
         ScreenshotUIDB = nil
         AzerothBuddyUI.positions = AzerothBuddyUI.positions or {}
+        AzerothBuddyUI.positions.chat = nil -- Retire only the unused addon chat anchor.
         UI.ReportEditLayoutResult()
         if AzerothBuddyUI.enabled == false then return end
         if InCombatLockdown() then UI.pendingStart = true; return end

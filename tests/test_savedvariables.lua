@@ -8,11 +8,12 @@ SlashCmdList={}
 local UI={}
 assert(loadfile('Core.lua'))('AzerothBuddyUI',UI)
 UI.ReportEditLayoutResult=function() end
-local legacy={enabled=false,positions={player={x=123,y=456}},welcomeVersion='old'}
+local legacy={enabled=false,positions={player={x=123,y=456},chat={x=1,y=2}},welcomeVersion='old'}
 ScreenshotUIDB=legacy;AzerothBuddyUI=nil
 frames[1].event(nil,'PLAYER_LOGIN')
 assert(AzerothBuddyUI==legacy and AzerothBuddyUI.positions.player.x==123)
 assert(ScreenshotUIDB==nil,'legacy global retired after migration')
+assert(not AzerothBuddyUI.positions.chat and AzerothBuddyUI.welcomeVersion=='old', 'remove only obsolete chat settings')
 local current={enabled=false,positions={target={x=12,y=34}}}
 AzerothBuddyUI=current;ScreenshotUIDB=legacy
 frames[1].event(nil,'PLAYER_LOGIN')

@@ -1,4 +1,4 @@
-# AzerothBuddyUI 1.1.3
+# AzerothBuddyUI 1.1.4
 
 <p align="center"><img src="branding/icon-400.png" alt="AzerothBuddyUI" width="160" height="160"></p>
 
@@ -11,7 +11,9 @@ Eine übersichtliche Spieloberfläche mit eigenen Einheitentafeln, Zauberleisten
 ## Funktionen
 
 - Minimap mit nativem Tracking und Kalender.
-- Aktionsleisten, Chat und Fußleiste in einem gemeinsamen Layout.
+- Aktionsleisten und Fußleiste in einem gemeinsamen Layout.
+- Unified Dark Styling mit dunkelgrauen Flächen, dezenten Rahmen und einheitlichen Bedienelementen.
+- Das Chatfenster wird ausschließlich von WoW verwaltet; auch das Setup übernimmt seine vorhandenen Blizzard-Layoutdaten unverändert.
 - Spieler-, Ziel-, Fokus-, Gruppen- und Raidrahmen sowie Auren.
 - Mitgeliefertes Layout für den Blizzard-Bearbeitungsmodus.
 
@@ -32,7 +34,7 @@ Für WowUp die [Repository-Adresse](https://github.com/norushflow/AzerothBuddyUI
 
 ## Schrift
 
-Eine für den Einsatz im Spiel lizenzierte Expressway-Regular-Datei im TrueType-Format kann lokal unter `AzerothBuddyUI/Media/Expressway.ttf` im installierten Addon abgelegt werden. Nach einem Neustart verwendet AzerothBuddyUI sie für eigene Dialoge, Tooltips und weitere Texte im gemeinsamen Design. Ohne verwendbare Datei sowie im koreanischen und chinesischen Client greift das Addon auf die Schrift des Clients zurück. Einheitentafeln und Raid-Vorschau verwenden die Schrift und den Schatten aus Version 1.0.7. [Lizenzinformationen von Typodermic](https://typodermicfonts.com/license/).
+Eine für den Einsatz im Spiel lizenzierte Expressway-Regular-Datei im TrueType-Format kann lokal unter `AzerothBuddyUI/Media/Expressway.ttf` im installierten Addon abgelegt werden. Nach einem Neustart verwendet AzerothBuddyUI sie für eigene Dialoge, Tooltips und weitere Texte im gemeinsamen Design. Ohne verwendbare Datei sowie im koreanischen und chinesischen Client greift das Addon auf die Schrift des Clients zurück. Einheitentafeln und Raid-Vorschau nutzen dieselbe Schriftpräferenz; Textgrößen und funktionale Statusfarben bleiben erhalten. [Lizenzinformationen von Typodermic](https://typodermicfonts.com/license/).
 
 ## Bedienung
 

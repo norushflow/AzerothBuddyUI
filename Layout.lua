@@ -3,7 +3,7 @@ local Style = UI.Style
 local Color = Style.Color
 
 local function shadeStrip(panel)
-    panel:SetBackdropColor(0, 0, 0, .5)
+    panel:SetBackdropColor(unpack(Color.strip))
     panel:SetBackdropBorderColor(unpack(Color.transparent))
 end
 
@@ -78,6 +78,15 @@ function UI.SkinActionButton(button)
             icon:ClearAllPoints();icon:SetPoint("TOPLEFT",button,"TOPLEFT",1,-1)
             icon:SetPoint("BOTTOMRIGHT",button,"BOTTOMRIGHT",-1,1)
             icon:SetTexCoord(.07,.93,.07,.93)
+            -- Match the square icon instead of Blizzard's inset/rounded swipe.
+            for _, key in ipairs({"cooldown", "chargeCooldown", "lossOfControlCooldown"}) do
+                UI.Foreign(button[key], function(cooldown)
+                    cooldown:ClearAllPoints()
+                    cooldown:SetAllPoints(icon)
+                    cooldown:SetSwipeTexture(Style.WHITE, unpack(Color.cooldown))
+                    cooldown:SetUseCircularEdge(false)
+                end)
+            end
         end
         for _,key in ipairs({"SlotArt","SlotBackground","NormalTexture"}) do
             local region=button[key]
@@ -104,7 +113,7 @@ function UI.SkinActionButton(button)
             pressed:SetAllPoints(button)
             pressed:SetVertexColor(Color.inset[1], Color.inset[2], Color.inset[3], .4)
         end
-        -- Cooldown, Ladungen, Tastenkürzel, Reichweite und Proc-Effekte bleiben nativ.
+        -- Cooldown-Zeiten, Ladungen, Tastenkürzel, Reichweite und Proc-Effekte bleiben nativ.
         button.abuiQuestSkin={background=bg,edges=edges}
     end)
 end
@@ -189,8 +198,6 @@ function UI.CreateLayout()
     end
     -- Keep the game's action buttons, bindings, paging, cooldowns and flyouts.
     -- Only arrange visible native bars; never force-show a bar hidden by a secure driver.
-    UI.chatAnchor = CreateFrame("Frame", nil, UIParent)
-    UI.chatAnchor:SetSize(365, 145)
     UI.mapAnchor = CreateFrame("Frame", nil, UIParent)
     UI.mapAnchor:SetSize(240, 240)
     pcall(function()
@@ -199,15 +206,8 @@ function UI.CreateLayout()
         UI.mapBorder = CreateFrame("Frame", nil, Minimap)
         UI.mapBorder:EnableMouse(false)
         UI.mapBorder:SetFrameLevel(math.max(0, Minimap:GetFrameLevel()-1))
-        if NineSliceUtil and NineSliceUtil.ApplyLayoutByName then
-            -- The native top piece extends downward. Leave room for it above the map.
-            UI.mapBorder:SetPoint("TOPLEFT", Minimap, "TOPLEFT", 0, 4)
-            UI.mapBorder:SetPoint("BOTTOMRIGHT", Minimap, "BOTTOMRIGHT", 0, 0)
-            NineSliceUtil.ApplyLayoutByName(UI.mapBorder, "SimplePanelTemplate")
-        else
-            UI.mapBorder:SetAllPoints(Minimap)
-            Style.Border(UI.mapBorder)
-        end
+        UI.mapBorder:SetAllPoints(Minimap)
+        UI.mapBorder.borders = Style.Border(UI.mapBorder)
     end)
     -- Class resources are drawn by our own widgets; native hierarchy stays intact.
     UI.targetCast = UI.CreateCastBar(UI.target, "target", 260)
@@ -331,16 +331,6 @@ function UI.ApplyLayout()
     -- Weitere Leisten behalten ihre Sichtbarkeit und vollständige native Anordnung.
     for _,prefix in ipairs({"MultiBarRightButton","MultiBarLeftButton","MultiBar5Button","MultiBar6Button","MultiBar7Button"}) do
         for i=1,12 do UI.SkinActionButton(_G[prefix..i]) end
-    end
-    UI.Anchor(UI.chatAnchor, "chat", "BOTTOMLEFT", 22, 52)
-    if ChatFrame1 then
-        pcall(function()
-            if ChatFrame1:IsForbidden() then return end
-            place(ChatFrame1, "BOTTOMLEFT", UI.chatAnchor, "BOTTOMLEFT", 0, 0)
-            ChatFrame1:SetSize(365, 145)
-            local font, _, flags = ChatFrame1:GetFont()
-            ChatFrame1:SetFont(font, 16, flags)
-        end)
     end
     UI.Anchor(UI.mapAnchor, "minimap", "TOPRIGHT", -4, -10)
     if MinimapCluster then

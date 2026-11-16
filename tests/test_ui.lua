@@ -350,6 +350,18 @@ for _,prefix in ipairs({"ActionButton","MultiBarBottomLeftButton","MultiBarBotto
         local f=object(prefix..i,container);f.secure=true;f.container=container;f.scale=1.4
     end
 end
+for _, button in ipairs({ActionButton1, MultiBarRightButton1}) do
+    button.icon=object(nil,button,"texture")
+    for _, key in ipairs({"cooldown", "chargeCooldown", "lossOfControlCooldown"}) do
+        local cooldown=object(nil,button,"Cooldown")
+        cooldown.duration=secret
+        cooldown.scripts.OnCooldownDone=function() end
+        function cooldown:SetSwipeTexture(path, ...) self.swipe=path;self.swipeColor={...} end
+        function cooldown:SetUseCircularEdge(value) self.circularEdge=value end
+        function cooldown:SetCooldown() error("styling must not restart native cooldowns") end
+        button[key]=cooldown
+    end
+end
 for i=1,3 do object("StanceButton"..i,StanceBar) end
 for i=1,10 do object("PetActionButton"..i,PetActionBar) end
 -- Extra action / zone ability buttons: built by Blizzard, not by our bars.
@@ -432,6 +444,18 @@ function questDialog:SetPoint(point, ...)
     end
 end
 questDialog:SetPoint("TOPLEFT", "UIParent", "TOPLEFT", 16, -100)
+local chatAccesses = 0
+for _, name in ipairs({"ChatFrame1", "ChatFrame2", "ChatFrame1Tab", "ChatFrame1EditBox", "ChatFrame1Background", "ChatFrame1ButtonFrame"}) do
+    local frame = _G[name] or object(name, UIParent)
+    for method, fn in pairs(methods) do
+        if type(fn) == "function" then
+            frame[method] = function()
+                chatAccesses = chatAccesses + 1
+                error("addon accessed native chat: " .. name .. ":" .. method)
+            end
+        end
+    end
+end
 local UI={}
 for _,file in ipairs({"Core.lua","EditLayout.lua","Tooltips.lua","Equipment.lua","GroupDebuffs.lua","Units.lua","Progress.lua","Castbars.lua","ClassPower.lua","Layout.lua","RaidTest.lua"}) do assert(loadfile(""..file))("AzerothBuddyUI",UI) end
 local dispatcher
@@ -483,13 +507,13 @@ do
     assertQuestAnchor()
     questDialog.secure = nil
 end
-assert(UI.started and UI.chatAnchor and UI.mapAnchor and not UI.Mover,
+assert(UI.started and not UI.chatAnchor and UI.mapAnchor and not UI.Mover,
     "layout started without manual movers")
 assert(TimeManagerClockButton.alpha==0 and TimeManagerClockButton.mouse==false, "native clock hidden; footer remains clickable")
 for _,panel in ipairs({UI.footer, UI.header}) do
     local r,g,b,a=unpack(panel.background.color)
-    assert(r==0 and g==0 and b==0 and a>0 and a<1,
-        "footer and minimap label use a translucent black background")
+    assert(r==UI.Style.Color.strip[1] and r==g and g==b and a>0 and a<1,
+        "footer and minimap label use the central translucent dark grey")
     for _,border in ipairs(panel.borders) do
         assert(border.color[4]==0, "the strips have no visible border")
     end
@@ -745,9 +769,9 @@ local laterButton=zoneButton()
 UI.ApplyLayout()
 assert(not laterButton.suiExtraSkinned and not laterButton.Icon.all)
 
--- Unit labels and flat bars match 1.0.7.
+-- Unit labels prefer Expressway, retaining sizes, shadows and health colours.
 local function checkUnitText(label, size, r, g, b)
-    assert(label.fontPath==(STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF") and label.fontSize==size and label.fontFlags=="")
+    assert(label.fontPath=="Interface\\AddOns\\AzerothBuddyUI\\Media\\Expressway.ttf" and label.fontSize==size and label.fontFlags=="")
     assert(label.shadowColor[1]==0 and label.shadowColor[2]==0 and label.shadowColor[3]==0 and label.shadowColor[4]==.85
         and label.shadowOffset[1]==1 and label.shadowOffset[2]==-1)
     assert(label.textColor[1]==r and label.textColor[2]==g and label.textColor[3]==b)
@@ -929,7 +953,7 @@ end
 
 assert(WarlockPowerFrame.parent==UIParent)
 assert(not UI.soulShards, "paladin must not get shards")
-assert(ChatFrame1.fontSize==16)
+assert(not ChatFrame1.fontSize and not ChatFrame1.point, "chat must remain untouched")
 assert(UI.info and UI.header, "native minimap zone header retained")
 assert(UI.targettarget.unit=="targettarget" and UI.targettarget.events.UNIT_TARGET=="target")
 assert(UI.targettarget.point[2]==UI.target and UI.targettarget.point[3]=="TOPRIGHT")
@@ -981,6 +1005,16 @@ end
 assert(StanceBar.width==3*(MultiBarRightButton1.width*MultiBarRightButton1.scale+2)-2 and StanceButton3.abuiQuestSkin)
 assert(ActionButton1.abuiQuestSkin and ActionButton1.checkedTexture, "questwatcher action skin")
 assert(#ActionButton1.abuiQuestSkin.edges==4 and ActionButton1.abuiQuestSkin.edges[1].color[1]==UI.Style.Color.border[1])
+for _, button in ipairs({ActionButton1, MultiBarRightButton1}) do
+    for _, key in ipairs({"cooldown", "chargeCooldown", "lossOfControlCooldown"}) do
+        local cooldown=button[key]
+        assert(cooldown.all==button.icon and cooldown.swipe==UI.Style.WHITE
+            and cooldown.circularEdge==false and cooldown.swipeColor[4]==UI.Style.Color.cooldown[4],
+            "cooldown must fill the square icon at every action bar size")
+        assert(cooldown.duration==secret and cooldown.scripts.OnCooldownDone,
+            "native cooldown timing and completion must survive styling")
+    end
+end
 local skinCount=#objects
 UI.SkinActionButton(ActionButton1)
 assert(#objects==skinCount,"skin duplicated textures")
@@ -1236,9 +1270,9 @@ do
     UI.ApplyLayout = apply
 end
 assert(Minimap.width==240 and MinimapCluster.scale==1, "native map dimensions preserved")
-assert(UI.mapBorder.parent==Minimap and UI.mapBorder.point[2]==Minimap
-    and UI.mapBorder.nineSliceLayout=="SimplePanelTemplate" and UI.mapBorder.mouse==false,
-    "native metal trim remains decorative")
+assert(UI.mapBorder.parent==Minimap and UI.mapBorder.all==Minimap
+    and not UI.mapBorder.nineSliceLayout and #UI.mapBorder.borders==4 and UI.mapBorder.mouse==false,
+    "minimap uses the central dark border without changing geometry")
 assert(BuffFrame.point[2]==Minimap and BuffFrame.point[3]=="TOPLEFT")
 assert(MinimapCluster.Tracking.parent==MinimapCluster and MinimapCluster.Tracking.shown,
     "native tracking must stay native")
@@ -1436,3 +1470,14 @@ assert(StanceButton1.width==50 and StanceButton1.height==50)
 assert(PetActionButton10.width==50 and PetActionButton10.height==50)
 assert(PetActionBar.width==518 and PetActionBar.height==50)
 print('PASS: stance/forms and pet buttons match scaled bar four')
+
+-- Exercise all layout triggers, then the deferred login/zone/scale callbacks.
+combat = false
+for _, name in ipairs({"PLAYER_LOGIN", "PLAYER_ENTERING_WORLD", "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED", "GROUP_ROSTER_UPDATE", "ADDON_LOADED", "PLAYER_REGEN_ENABLED"}) do
+    event(name)
+end
+SlashCmdList.AZEROTHBUDDYUI("reset")
+editCallbacks["EditMode.Exit"]()
+for _, callback in ipairs(deferred) do callback() end
+assert(chatAccesses == 0, "startup, events, reset or delayed layout accessed native chat")
+print("PASS: native chat frames, tabs, input and backgrounds untouched across layout lifecycle")

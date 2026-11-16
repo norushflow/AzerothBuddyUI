@@ -6,10 +6,12 @@ local allowImport, allowBars = true, true
 local methods = {}
 for _, method in ipairs({"SetSize", "SetWidth", "SetHeight", "SetWordWrap", "SetTextColor",
     "SetFrameStrata", "EnableMouse", "SetClampedToScreen", "RegisterEvent", "SetAllPoints", "SetTexture",
-    "SetColorTexture", "SetShadowColor", "SetShadowOffset", "ClearAllPoints", "SetDrawLayer"}) do
+    "SetColorTexture", "SetShadowColor", "SetShadowOffset", "ClearAllPoints", "SetDrawLayer", "SetTexCoord"}) do
     methods[method] = function() end
 end
 function methods:SetPoint(...) self.point={...} end
+function methods:SetColorTexture(...) self.color={...} end
+function methods:SetSize(w,h) self.width,self.height=w,h end
 function methods:SetVertexColor(...) self.tint={...} end
 function methods:SetText(text) self.text=text end
 function methods:SetFont(path, size) self.fontPath, self.fontSize = path, size; return true end
@@ -23,10 +25,10 @@ function CreateFrame()
 end
 methods.CreateTexture = CreateFrame
 methods.CreateFontString = CreateFrame
-for _, state in ipairs({"Normal", "Pushed", "Disabled"}) do
-    methods["Set"..state.."Atlas"] = function(self, atlas)
+for _, state in ipairs({"Normal", "Pushed", "Disabled", "Highlight"}) do
+    methods["Set"..state.."Texture"] = function(self, path)
         self[state] = CreateFrame()
-        self[state].atlas = atlas
+        self[state].path = path
     end
     methods["Get"..state.."Texture"] = function(self) return self[state] end
 end
@@ -60,7 +62,14 @@ assert(UI.welcome.shown and AzerothBuddyUICharDB.welcomeVersion, "welcome shown 
 assert(UI.welcome.setupButton.label.fontPath == "Interface\\AddOns\\AzerothBuddyUI\\Media\\Expressway.ttf")
 assert(UI.welcome.description.fontPath == UI.welcome.setupButton.label.fontPath and UI.welcome.description.fontSize == 13)
 local fill = UI.welcome.setupButton.Normal
-assert(fill.atlas == "UI-HUD-CoolDownManager-Bar" and fill.tint[1] == UI.Style.Color.button[1])
+assert(fill.path == UI.Style.WHITE and fill.tint[1] == UI.Style.Color.button[1])
+assert(UI.welcome.width==480 and UI.welcome.height==380 and UI.welcome.point[5]==70,
+    "dark styling must preserve window geometry")
+assert(UI.welcome.background.color[1]==UI.welcome.background.color[2]
+    and UI.welcome.background.color[2]==UI.welcome.background.color[3]
+    and UI.welcome.background.color[4]<1 and #UI.welcome.borders==4)
+assert(UI.welcome.closeButton.Normal.path==UI.Style.WHITE
+    and UI.welcome.closeButton.Normal.tint[1]==fill.tint[1], "close and setup share the dark fill")
 for _,frame in ipairs(frames) do
     if frame.text == UI.L["AzerothBuddyUI einrichten"] then assert(frame.point[5] == -25) end
 end
@@ -127,3 +136,26 @@ UI.welcome.closeButton.OnClick()
 UI.ShowWelcome()
 assert(not UI.welcome.shown, "reload on same character/version must stay quiet")
 print("PASS: per-character persistence, new character, account migration, returning character and version update on both characters")
+
+for _, mode in ipairs({"missing", "error", "koKR", "zhCN", "zhTW"}) do
+    local previousLocale = GetLocale
+    GetLocale = function() return mode end
+    local namespace = {}
+    assert(loadfile("Style.lua"))("AzerothBuddyUI", namespace)
+    local probes = 0
+    local region = {SetFont=function(self, path)
+        if path:find("Expressway", 1, true) then
+            probes = probes + 1
+            if mode == "error" then error("missing font") end
+            return false
+        end
+        self.path = path
+        return true
+    end}
+    namespace.Style.Font(region, "body")
+    namespace.Style.Font(region, "small")
+    assert(region.path=="Fonts\\FRIZQT__.TTF" and probes==((mode=="missing" or mode=="error") and 1 or 0),
+        "font fallback must be cached and retain locale support")
+    GetLocale = previousLocale
+end
+print("PASS: dark window/control styling, preserved geometry and optional font fallback")

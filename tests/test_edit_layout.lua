@@ -4,14 +4,30 @@ function InCombatLockdown() return combat end
 local UI={Message=function() end}
 assert(loadfile("EditLayout.lua"))("AzerothBuddyUI",UI)
 AzerothBuddyUI={}
-Enum={EditModeLayoutType={Preset=0,Account=1}}
+Enum={EditModeLayoutType={Preset=0,Account=1},EditModeSystem={ChatFrame=8}}
 local raw, cache, active, imports, saves, writes, completed, queue
 local reject, delayed, invalid
+local nativeChat
+local function checkChat(data)
+    local chat, count
+    count = 0
+    for _, system in ipairs(data.systems) do
+        if system.system==Enum.EditModeSystem.ChatFrame then chat=system;count=count+1 end
+    end
+    assert(count==1 and chat~=nativeChat and chat.anchorInfo~=nativeChat.anchorInfo,
+        "copy chat without sharing or duplicating native data")
+    assert(chat.anchorInfo.offsetX==nativeChat.anchorInfo.offsetX
+        and chat.anchorInfo.offsetY==nativeChat.anchorInfo.offsetY
+        and chat.anchorInfo.relativeTo==nativeChat.anchorInfo.relativeTo
+        and chat.settings[1].value==nativeChat.settings[1].value,
+        "setup must retain native chat position and settings")
+end
 local function reset(existing)
-    raw={{layoutName="Other",layoutType=1,systems={{keep=true}}}}
+    nativeChat={system=8,systemIndex=1,anchorInfo={offsetX=137,offsetY=92,relativeTo="UIParent"},settings={{setting=0,value=17}}}
+    raw={{layoutName="Other",layoutType=1,systems={{keep=true},nativeChat}}}
     cache={[3]=raw[1]}
     if existing then
-        raw[2]={layoutName="AzerothBuddyUI",layoutType=1,systems={{custom=true}}}
+        raw[2]={layoutName="AzerothBuddyUI",layoutType=1,systems={{custom=true},{system=8,anchorInfo={offsetX=999}}}}
         cache[4]=raw[2]
     end
     active=3;imports=0;saves=0;writes=0;completed=0;queue={}
@@ -22,14 +38,25 @@ local function reset(existing)
         GetLayouts=function() return {activeLayout=active,layouts=raw} end,
         ConvertStringToLayoutInfo=function(value)
             assert(#value>1000)
+            local tokens = {}
+            for token in value:gmatch("%S+") do tokens[#tokens+1]=token end
+            assert(#tokens==2+10*tonumber(tokens[2]), "layout serialization count must match")
+            local exportedChat
+            for slot=3,#tokens,10 do
+                if tokens[slot]=="8" then
+                    exportedChat={system=8,anchorInfo={offsetX=tonumber(tokens[slot+6]),offsetY=tonumber(tokens[slot+7])}}
+                end
+            end
+            assert(exportedChat, "full user export must be retained as supplied")
             if invalid then return nil end
-            return {systems={{template=true}}}
+            return {systems={{template=true},exportedChat}}
         end,
         SetActiveLayout=function(index)
             writes=writes+1
             if not reject and not delayed then active=index end
         end,
         SaveLayouts=function(data)
+            checkChat(data.layouts[2])
             saves=saves+1
             assert(data.layouts~=raw and data.layouts[1]~=raw[1], "never mutate original API or manager tables")
             assert(data.layouts[1].systems[1].keep)
@@ -41,6 +68,7 @@ local function reset(existing)
     EditModeManagerFrame={layoutInfo={activeLayout=3,layouts=cache},
         IsForbidden=function() return forbidden end, IsShown=function() return shown end,
         ImportLayout=function(_,data,kind,title)
+            checkChat(data)
             imports=imports+1;data.layoutName=title;data.layoutType=kind
             raw[#raw+1]=data;cache[#raw+2]=data
         end,
@@ -83,3 +111,28 @@ reset(true);assert(UI.EnableEditLayout());complete();UI.editLayoutPending=nil;dr
 reset(true);C_EditMode.SaveLayouts=nil;assert(not UI.EnableEditLayout() and raw[2].systems[1].custom)
 reset(true);C_EditMode=nil;assert(not UI.EnableEditLayout())
 print("PASS: import, overwrite exact name, preserve other layouts, snapshot isolation, actual selection, timeout and guards")
+
+-- Already-active addon layout, presets and multiple independent chat systems.
+reset(true)
+active=4
+nativeChat=cache[4].systems[2]
+nativeChat.anchorInfo={offsetX=99,offsetY=71,relativeTo="UIParent"}
+nativeChat.settings={{setting=0,value=23}}
+assert(UI.EnableEditLayout() and saves==1 and writes==0)
+reset(false)
+cache[1]={layoutName="Preset",layoutType=0,systems={nativeChat}}
+active=1
+assert(UI.EnableEditLayout() and imports==1)
+reset(false)
+table.insert(cache[3].systems, {system=8,systemIndex=2,anchorInfo={offsetX=60},settings={}})
+EditModeManagerFrame.ImportLayout=function(_, data)
+    assert(#data.systems==3 and data.systems[3].systemIndex==2 and data.systems[3].anchorInfo.offsetX==60)
+    assert(data.systems[3]~=cache[3].systems[3], "each chat system must be copied")
+    cache[4]={layoutName="AzerothBuddyUI",systems=data.systems}
+end
+assert(UI.EnableEditLayout())
+reset(false)
+cache[3].systems={{keep=true}}
+assert(not UI.EnableEditLayout() and imports==0 and saves==0 and writes==0,
+    "missing chat data must abort before changing layouts")
+print("PASS: setup preserves current chat on import, overwrite, active layout and preset; unavailable data prevents writes")
