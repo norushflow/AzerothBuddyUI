@@ -1,6 +1,9 @@
-local _, UI = ...
+local addonName, UI = ...
 local Style = UI.Style
 local Color = Style.Color
+local media = "Interface\\AddOns\\" .. addonName .. "\\Media\\"
+local unitFade = media .. "UnitFade.tga"
+local unitInset = 8
 local frames = {}
 
 -- Use the central font preference while retaining label sizes and health colours.
@@ -36,9 +39,39 @@ local function bar(parent, x, y, width, height)
     local status = CreateFrame("StatusBar", nil, parent)
     status:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
     status:SetSize(width, height)
-    UI.StyleStatusBar(status)
     status:SetMinMaxValues(0, 1)
     return status
+end
+function UI.CreateGroupMeters(frame, width, height)
+    frame.health = bar(frame, 2, -2, width-4, height-7)
+    frame.power = bar(frame, 2, -(height-4), width-4, 2)
+    local groupEdge = media .. "GroupEdge.tga"
+    UI.StyleFadedBar(frame.health, true, groupEdge)
+    UI.StyleFadedBar(frame.power, true)
+end
+local function createIndividualMeters(frame, width, height)
+    local background = frame:CreateTexture(nil, "BACKGROUND")
+    background:SetAllPoints(frame)
+    background:SetTexture(unitFade)
+
+    local meterHeight = height > 30 and 6 or 4
+    local meterY = -(height - meterHeight - 4)
+    local surface = bar(frame, 0, 0, width, -meterY - 1)
+    local surfaceMask = UI.StyleFadedBar(surface)
+    local surfaceTrack = surface:CreateTexture(nil, "BACKGROUND")
+    surfaceTrack:SetAllPoints(surface)
+    surfaceTrack:SetColorTexture(.36, .37, .39, .64)
+    surfaceTrack:AddMaskTexture(surfaceMask)
+    local gap = 6
+    local meterWidth = width - 2 * unitInset - gap
+    local powerWidth = math.floor(meterWidth / 4)
+    local healthWidth = meterWidth - powerWidth
+    frame.healthSurface = surface
+    surface:SetStatusBarColor(.055, .06, .07, .9)
+    frame.health = bar(frame, unitInset, meterY, healthWidth, meterHeight)
+    frame.power = bar(frame, unitInset + healthWidth + gap, meterY, powerWidth, meterHeight)
+    UI.StyleFadedBar(frame.health)
+    UI.StyleFadedBar(frame.power, true)
 end
 local function update(frame, event)
     local unit = frame.unit
@@ -48,8 +81,13 @@ local function update(frame, event)
     local healthChanged = event ~= "UNIT_POWER_UPDATE"
     -- Health and power may be secret in Midnight: pass straight to native widgets.
     if healthChanged then
-        frame.health:SetMinMaxValues(0, UnitHealthMax(unit))
-        frame.health:SetValue(UnitHealth(unit))
+        local maximum, health = UnitHealthMax(unit), UnitHealth(unit)
+        frame.health:SetMinMaxValues(0, maximum)
+        frame.health:SetValue(health)
+        if frame.healthSurface then
+            frame.healthSurface:SetMinMaxValues(0, maximum)
+            frame.healthSurface:SetValue(health)
+        end
     end
     if event ~= "UNIT_HEALTH" then
         frame.power:SetMinMaxValues(0, UnitPowerMax(unit))
@@ -95,30 +133,27 @@ local function unitFrame(unit, width, height, compact, parent, nameSize, percent
     local frame = CreateFrame("Button", "AzerothBuddyUI_"..unit..(compact and "Group" or ""), parent, "SecureUnitButtonTemplate")
     frame.unit = unit
     frame:SetSize(width, height)
-    Style.Panel(frame)
     frame:SetAttribute("unit", unit)
     frame:SetAttribute("type1", "target")
     frame:SetAttribute("type2", "togglemenu")
     frame:RegisterForClicks("AnyUp")
-    frame.health = bar(frame, 2, -2, width-4, height-7)
-    frame.power = bar(frame, 2, -(height-4), width-4, 2)
+    if compact then
+        UI.CreateGroupMeters(frame, width, height)
+    else
+        createIndividualMeters(frame, width, height)
+    end
     -- Text belongs to a separate overlay, never anchors to a secret status bar.
     local overlay = CreateFrame("Frame", nil, frame)
     overlay:SetAllPoints(frame)
     overlay:SetFrameLevel(frame.health:GetFrameLevel()+2)
-    -- Static translucent shading; never inspect or anchor to secret health fills.
-    local sheen = overlay:CreateTexture(nil, "ARTWORK")
-    sheen:SetPoint("TOPLEFT", frame, "TOPLEFT", 2, -2)
-    sheen:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -2, 5)
-    sheen:SetTexture(Style.WHITE)
-    sheen:SetGradient("VERTICAL", CreateColor(0, 0, 0, .12), CreateColor(1, 1, 1, .06))
-    frame.name = UI.UnitText(overlay, nameSize, compact and "CENTER" or "LEFT", compact and 0 or 7, compact and 4 or 1)
+    frame.name = UI.UnitText(overlay, nameSize, compact and "CENTER" or "LEFT", compact and 0 or unitInset, 4)
     frame.name:SetWidth(compact and width-6 or width-74)
     frame.name:SetWordWrap(false)
     frame.name:SetJustifyH(compact and "CENTER" or "LEFT")
     local point = compact and "BOTTOM" or "RIGHT"
-    local x, y = compact and 0 or -6, compact and 8 or 0
-    frame.percent = UI.UnitText(overlay, percentSize, point, x, y, .2, 1, .05)
+    local x, y = compact and 0 or -8, compact and 8 or 4
+    local percentColor = compact and {.2, 1, .05} or {.96, .91, .81}
+    frame.percent = UI.UnitText(overlay, percentSize, point, x, y, unpack(percentColor))
     if percentAlpha.warn then
         frame.percentWarn = UI.UnitText(overlay, percentSize, point, x, y, 1, .82, .1)
         frame.percentLow = UI.UnitText(overlay, percentSize, point, x, y, .92, .12, .09)
@@ -179,12 +214,12 @@ local function auraAccessAllowed()
     local restricted = C_Secrets.ShouldAurasBeSecret()
     return UI.Public(restricted) and not restricted
 end
-local function addAuras(parent, unit, count, size, filter, offset)
+local function addAuras(parent, unit, count, size, filter, offset, inset)
     if not C_UnitAuras or not C_UnitAuras.GetAuraDataByIndex then return end
     -- These are unprotected children: aura visibility never controls the unit button.
     local host = CreateFrame("Frame", nil, parent)
     host:SetSize(count*(size+2), size)
-    host:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 0, offset)
+    host:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", inset or 0, offset)
     local icons = {}
     for i=1,count do
         local icon = CreateFrame("Frame", nil, host)
@@ -272,7 +307,7 @@ function UI.CreateUnits()
     end
     UI.pet = unitFrame("pet", 148, 28, false, UIParent, 12, 11)
     RegisterStateDriver(UI.pet, "visibility", "[petbattle] hide; [vehicleui] hide; [@pet,exists] show; hide")
-    addAuras(UI.target, "target", 12, 15, "HELPFUL", -4)
+    addAuras(UI.target, "target", 12, 15, "HELPFUL", -4, unitInset)
     addAuras(UI.target, "target", 12, 15, "HARMFUL", -22)
     UI.group = CreateFrame("Frame", "AzerothBuddyUIGroup", UIParent)
     UI.group:SetSize(441, 90)
@@ -308,7 +343,7 @@ function UI.PositionUnits()
     UI.Anchor(UI.combatAnchor, "combatOrigin", "BOTTOM", 0, h*.278-23)
     UI.Anchor(UI.player, "player", "RIGHT", -20, 38, UI.combatAnchor, "LEFT")
     UI.Anchor(UI.target, "target", "LEFT", 20, 38, UI.combatAnchor, "RIGHT")
-    UI.Anchor(UI.group, "group", "TOP", 0, -20, UI.playerCastAnchor, "BOTTOM")
+    UI.Anchor(UI.group, "group", "TOP", 0, -48, UI.combatAnchor, "BOTTOM")
     -- Raid starts at the group row and adds horizontal rows downwards.
     UI.raidAnchor:ClearAllPoints()
     UI.raidAnchor:SetPoint("TOP", UI.group, "TOP", 0, 0)

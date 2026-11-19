@@ -4,7 +4,7 @@ function InCombatLockdown() return combat end
 local UI={Message=function() end}
 assert(loadfile("EditLayout.lua"))("AzerothBuddyUI",UI)
 AzerothBuddyUI={}
-Enum={EditModeLayoutType={Preset=0,Account=1},EditModeSystem={ChatFrame=8}}
+Enum={EditModeLayoutType={Preset=0,Account=1},EditModeSystem={ChatFrame=8,ActionBar=0}}
 local raw, cache, active, imports, saves, writes, completed, queue
 local reject, delayed, invalid
 local nativeChat
@@ -41,13 +41,24 @@ local function reset(existing)
             local tokens = {}
             for token in value:gmatch("%S+") do tokens[#tokens+1]=token end
             assert(#tokens==2+10*tonumber(tokens[2]), "layout serialization count must match")
-            local exportedChat
+            local exportedChat, exportedBars = nil, {}
             for slot=3,#tokens,10 do
+                if tokens[slot]=="0" then
+                    exportedBars[tokens[slot+1]] = {
+                        system=0, systemIndex=tonumber(tokens[slot+1]),
+                        anchorInfo={relativeTo=tokens[slot+5], offsetX=tonumber(tokens[slot+6]),
+                            offsetY=tonumber(tokens[slot+7])},
+                    }
+                end
                 if tokens[slot]=="8" then
                     exportedChat={system=8,anchorInfo={offsetX=tonumber(tokens[slot+6]),offsetY=tonumber(tokens[slot+7])}}
                 end
             end
             assert(exportedChat, "full user export must be retained as supplied")
+            assert(exportedBars["0"].anchorInfo.offsetX==1286.2 and exportedBars["0"].anchorInfo.offsetY==-821)
+            assert(exportedBars["1"].anchorInfo.relativeTo=="MainActionBar" and exportedBars["1"].anchorInfo.offsetY==-4)
+            assert(exportedBars["2"].anchorInfo.relativeTo=="MainActionBar" and exportedBars["2"].anchorInfo.offsetY==4)
+            assert(exportedBars["10"].anchorInfo.offsetX==1386.3 and exportedBars["10"].anchorInfo.offsetY==-740.8)
             if invalid then return nil end
             return {systems={{template=true},exportedChat}}
         end,
@@ -136,3 +147,26 @@ cache[3].systems={{keep=true}}
 assert(not UI.EnableEditLayout() and imports==0 and saves==0 and writes==0,
     "missing chat data must abort before changing layouts")
 print("PASS: setup preserves current chat on import, overwrite, active layout and preset; unavailable data prevents writes")
+
+reset(false)
+local nativeBar = {system=0,systemIndex=1,anchorInfo={offsetX=87},settings={{setting=2,value=6}}}
+table.insert(cache[3].systems, nativeBar)
+local convert = C_EditMode.ConvertStringToLayoutInfo
+C_EditMode.ConvertStringToLayoutInfo = function(value)
+    local layout = convert(value)
+    table.insert(layout.systems, {system=0,systemIndex=1,anchorInfo={relativeTo="MainActionBar", offsetY=-4}})
+    return layout
+end
+local import = EditModeManagerFrame.ImportLayout
+EditModeManagerFrame.ImportLayout = function(self, layout, ...)
+    local count = 0
+    for _, system in ipairs(layout.systems) do
+        if system.system == 0 then
+            count = count + 1
+            assert(system ~= nativeBar and system.anchorInfo.relativeTo == "MainActionBar" and system.anchorInfo.offsetY == -4)
+        end
+    end
+    assert(count == 1, "setup must use the supplied action bar layout")
+    return import(self, layout, ...)
+end
+assert(UI.EnableEditLayout())

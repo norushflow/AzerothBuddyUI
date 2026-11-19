@@ -38,6 +38,22 @@ function UI.StyleStatusBar(bar)
     background:SetAllPoints(bar)
     background:SetColorTexture(unpack(Style.Color.inset))
 end
+local fadeTexture = "Interface\\AddOns\\" .. addonName .. "\\Media\\UnitFade.tga"
+function UI.StyleFadedBar(status, withTrack, texture)
+    texture = texture or fadeTexture
+    status:SetStatusBarTexture(Style.WHITE)
+    -- The mask stays on the fixed bar geometry as the native fill changes.
+    local mask = status:CreateMaskTexture()
+    mask:SetAllPoints(status)
+    mask:SetTexture(texture, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+    status:GetStatusBarTexture():AddMaskTexture(mask)
+    if withTrack then
+        local track = status:CreateTexture(nil, "BACKGROUND")
+        track:SetAllPoints(status)
+        track:SetTexture(texture)
+    end
+    return mask
+end
 function UI.Message(text)
     print(Style.Hex(Style.Color.gold) .. "AzerothBuddyUI:|r " .. text)
 end
@@ -194,44 +210,7 @@ function UI.Start()
     end)
     UI.InstallEquipment()
     raidState = (IsInRaid and IsInRaid()) and true or false
-    UI.Message(L["Version %s geladen. /abui für Leisten 1–4."]:format(UI.VERSION))
-end
--- Nur auf ausdrücklichen Slash-Aufruf Einstellungen ändern, nie beim Start.
-function UI.ConfigureActionBars()
-    if InCombatLockdown() then return false end
-    local ok = pcall(function()
-        assert(Settings and Settings.GetValue and Settings.SetValue, "Settings unavailable")
-        assert(C_CVar and C_CVar.GetCVar and C_CVar.SetCVar, "CVar unavailable")
-        -- Erst alle Werte prüfen, bevor Einstellungen geschrieben werden.
-        local current = {}
-        for bar=2,8 do
-            local key = "PROXY_SHOW_ACTIONBAR_"..bar
-            local value = Settings.GetValue(key)
-            assert(UI.Public(value) and type(value)=="boolean", "action bar setting unavailable")
-            current[bar] = value
-        end
-        local cooldown = C_CVar.GetCVar("cooldownViewerEnabled")
-        assert(UI.Public(cooldown) and type(cooldown)=="string", "cooldown setting unavailable")
-        for bar=2,8 do
-            local enabled = bar<=4
-            if current[bar]~=enabled then Settings.SetValue("PROXY_SHOW_ACTIONBAR_"..bar,enabled) end
-        end
-        if cooldown~="0" then C_CVar.SetCVar("cooldownViewerEnabled","0") end
-        for bar=2,8 do
-            local value = Settings.GetValue("PROXY_SHOW_ACTIONBAR_"..bar)
-            assert(UI.Public(value) and value==(bar<=4), "action bar setting rejected")
-        end
-        local value = C_CVar.GetCVar("cooldownViewerEnabled")
-        assert(UI.Public(value) and value=="0", "cooldown setting rejected")
-    end)
-    if not ok then
-        UI.Message(L["Einstellungen konnten nicht vollständig übernommen werden. Bitte Aktionsleisten und Abklingzeitmanager in den WoW-Optionen prüfen."])
-        return false
-    end
-    UI.ApplyLayout()
-    UI.ReapplySoon()
-    UI.Message(L["Aktionsleisten 1–4 aktiv, 5–8 aus. Abklingzeitmanager deaktiviert. /abui hilfe zeigt die Befehle."])
-    return true
+    UI.Message(L["Version %s geladen. /abui zeigt die Befehle."]:format(UI.VERSION))
 end
 -- Called only by the explicit setup button after displaying the overwrite warning.
 function UI.RunSetup()
@@ -263,14 +242,12 @@ SlashCmdList.AZEROTHBUDDYUI = function(message)
         ReloadUI()
     elseif not UI.started then
         UI.Message(L["Deaktiviert. Mit /abui on einschalten."])
-    elseif command == "" then
-        UI.ConfigureActionBars()
     elseif command == "raidtest" or command:match("^raidtest%s") then
         UI.RaidTest(command:match("^raidtest%s*(.*)$"))
     elseif command == "reset" then
         AzerothBuddyUI.positions = {}
         UI.ApplyLayout()
     else
-        UI.Message(L["/abui reset · raidtest 20 · raidtest off · blizzard · off · on · layoutstatus. /abui setzt Leisten 1–4 und deaktiviert den Abklingzeitmanager."])
+        UI.Message(L["/abui reset · raidtest 20 · raidtest off · blizzard · off · on · layoutstatus."])
     end
 end

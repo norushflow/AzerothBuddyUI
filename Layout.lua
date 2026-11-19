@@ -49,11 +49,6 @@ local function layoutClockAndCalendar()
         end
     end)
 end
-local bars = {
-    {name="MainActionBar", prefix="ActionButton", key="actions1", y=43},
-    {name="MultiBarBottomLeft", prefix="MultiBarBottomLeftButton", key="actions2", y=5},
-    {name="MultiBarBottomRight", prefix="MultiBarBottomRightButton", key="actions3", y=81},
-}
 -- Blizzards EditMode-SetPoint merkt sich den relativen Rahmen als "Snap".
 -- Unsere Anordnung ist kein EditMode-Snap: beim Ausblenden der Ziel-Leiste
 -- bricht Blizzard sonst die Verankerung der geschützten Leiste (auch im Kampf),
@@ -63,60 +58,37 @@ local function place(frame, point, relative, relativePoint, x, y)
     frame:SetPoint(point, relative, relativePoint, x, y)
     if type(frame.ClearFrameSnap) == "function" then frame:ClearFrameSnap() end
 end
--- Nur Darstellung nativer Aktionsknöpfe; keine Aktionen, Attribute oder Skripte ersetzen.
-function UI.SkinActionButton(button)
-    if not button or InCombatLockdown() then return end
-    pcall(function()
-        if button:IsForbidden() or button.abuiQuestSkin then return end
-        local bg = button:CreateTexture(nil, "BACKGROUND", nil, -8)
-        bg:SetAllPoints(button)
-        bg:SetColorTexture(unpack(Color.inset))
-        local edges = Style.Border(button, Color.border, "OVERLAY", 1)
-        local icon=button.icon or button.Icon
-        if icon and not icon:IsForbidden() then
-            if button.IconMask and not button.IconMask:IsForbidden() then icon:RemoveMaskTexture(button.IconMask) end
-            icon:ClearAllPoints();icon:SetPoint("TOPLEFT",button,"TOPLEFT",1,-1)
-            icon:SetPoint("BOTTOMRIGHT",button,"BOTTOMRIGHT",-1,1)
-            icon:SetTexCoord(.07,.93,.07,.93)
-            -- Match the square icon instead of Blizzard's inset/rounded swipe.
-            for _, key in ipairs({"cooldown", "chargeCooldown", "lossOfControlCooldown"}) do
-                UI.Foreign(button[key], function(cooldown)
-                    cooldown:ClearAllPoints()
-                    cooldown:SetAllPoints(icon)
-                    cooldown:SetSwipeTexture(Style.WHITE, unpack(Color.cooldown))
-                    cooldown:SetUseCircularEdge(false)
-                end)
-            end
-        end
-        for _,key in ipairs({"SlotArt","SlotBackground","NormalTexture"}) do
-            local region=button[key]
-            if region and not region:IsForbidden() then region:SetAlpha(0) end
-        end
-        local normal=button:GetNormalTexture()
-        if normal and not normal:IsForbidden() then normal:SetAlpha(0) end
-        button:SetHighlightTexture(Style.WHITE, "ADD")
-        button:SetPushedTexture(Style.WHITE)
-        if button.SetCheckedTexture then
-            button:SetCheckedTexture("Interface\\AddOns\\AzerothBuddyUI\\Media\\Selection")
-            local checked=button:GetCheckedTexture()
-            if checked and not checked:IsForbidden() then
-                checked:SetAllPoints(button)
-                checked:SetVertexColor(unpack(Color.selected))
-            end
-        end
-        local hover,pressed=button:GetHighlightTexture(),button:GetPushedTexture()
-        if hover and not hover:IsForbidden() then
-            hover:SetAllPoints(button)
-            hover:SetVertexColor(unpack(Color.highlight))
-        end
-        if pressed and not pressed:IsForbidden() then
-            pressed:SetAllPoints(button)
-            pressed:SetVertexColor(Color.inset[1], Color.inset[2], Color.inset[3], .4)
-        end
-        -- Cooldown-Zeiten, Ladungen, Tastenkürzel, Reichweite und Proc-Effekte bleiben nativ.
-        button.abuiQuestSkin={background=bg,edges=edges}
+local function darkenActionArt(texture)
+    UI.Foreign(texture, function(region)
+        if region.SetVertexColor then region:SetVertexColor(.16, .16, .16) end
     end)
 end
+
+local function skinActionButtons(prefix, count)
+    for i=1,count do
+        UI.Foreign(_G[prefix..i], function(button)
+            darkenActionArt(button.SlotArt)
+            darkenActionArt(button.SlotBackground)
+            darkenActionArt(button.NormalTexture)
+            if button.GetNormalTexture then darkenActionArt(button:GetNormalTexture()) end
+        end)
+    end
+end
+
+local function skinActionBars()
+    for _, name in ipairs({"MainActionBar", "MultiBarBottomLeft", "MultiBarBottomRight",
+        "MultiBarRight", "MultiBarLeft", "MultiBar5", "MultiBar6", "MultiBar7"}) do
+        UI.Foreign(_G[name], function(bar)
+            darkenActionArt(bar.Background)
+            darkenActionArt(bar.BorderArt)
+            darkenActionArt(bar.EndCaps)
+        end)
+        skinActionButtons(name == "MainActionBar" and "ActionButton" or name.."Button", 12)
+    end
+    skinActionButtons("StanceButton", NUM_STANCE_SLOTS or 10)
+    skinActionButtons("PetActionButton", NUM_PET_ACTION_SLOTS or 10)
+end
+
 local function hideNative(frame, vehicle, raid)
     if InCombatLockdown() then return end
     UI.Foreign(frame, function(native)
@@ -125,6 +97,37 @@ local function hideNative(frame, vehicle, raid)
         native:SetParent(host)
         RegisterStateDriver(host, "visibility", vehicle and "[vehicleui] show; hide" or raid and "[group:raid] show; hide" or "hide")
     end)
+end
+
+local function positionPlayerCast()
+    local anchor, width, offset = UI.combatAnchor, 264, -10
+    UI.Foreign(MainActionBar, function(main)
+        local scale, parentScale = main:GetEffectiveScale(), UIParent:GetEffectiveScale()
+        local barWidth, center, bottom = main:GetWidth(), main:GetCenter(), main:GetBottom()
+        local function numeric(value)
+            return UI.Public(value) and type(value) == "number"
+        end
+        if not (numeric(scale) and numeric(parentScale) and numeric(barWidth)
+            and numeric(center) and numeric(bottom)) or scale <= 0 or parentScale <= 0 or barWidth <= 10 then return end
+        local centerX = center * scale
+        anchor, width, offset = main, barWidth * scale / parentScale, -12
+        local lowest = bottom * scale
+        for _, name in ipairs({"MultiBarBottomLeft", "MultiBarBottomRight"}) do
+            UI.Foreign(_G[name], function(bar)
+                local shown = bar:IsVisible()
+                if not UI.Public(shown) or not shown then return end
+                local x, y, barScale = bar:GetCenter(), bar:GetBottom(), bar:GetEffectiveScale()
+                if numeric(x) and numeric(y) and numeric(barScale) and barScale > 0
+                    and math.abs(x * barScale - centerX) <= barWidth * scale / 4 and y * barScale < lowest then
+                    anchor, lowest = bar, y * barScale
+                end
+            end)
+        end
+    end)
+    place(UI.playerCastAnchor, "TOP", anchor, "BOTTOM", 0, offset)
+    place(UI.playerCast, "TOP", UI.playerCastAnchor, "TOP", 0, 0)
+    UI.playerCast:SetWidth(width)
+    UI.playerCast.label:SetWidth(width - 10)
 end
 -- Observe Blizzard's public exit event without writing to the manager or
 -- running our frame mutations inside its OnHide/reset call stack.
@@ -154,9 +157,9 @@ function UI.CreateLayout()
     UI.clockButton:SetHighlightTexture(Style.WHITE, "ADD")
     UI.clockButton:GetHighlightTexture():SetVertexColor(unpack(Color.highlight))
     UI.clock = UI.Text(UI.clockButton, 26, "CENTER", nil, 0, 0, Color.gold)
-    local plaqueWidth = 186
-    UI.header = UI.Panel(UIParent, plaqueWidth, 20)
-    shadeStrip(UI.header)
+    local zoneWidth = 186
+    UI.header = CreateFrame("Frame", nil, UIParent)
+    UI.header:SetSize(zoneWidth, 20)
     -- Minimap ist ein fremdes Blizzard-Fenster: nur gesichert umhängen.
     pcall(function()
         local parent = Minimap
@@ -169,7 +172,7 @@ function UI.CreateLayout()
         UI.header:SetFrameLevel(Minimap:GetFrameLevel()+5)
     end)
     UI.info = UI.Text(UI.header, "hud", "CENTER", nil, 0, 0, Color.gold)
-    UI.info:SetWidth(plaqueWidth - 2 * Style.Spacing.small)
+    UI.info:SetWidth(zoneWidth - 2 * Style.Spacing.small)
     UI.info:SetWordWrap(false)
     local lastMinute
     local function showInfo(hour, minute)
@@ -192,12 +195,6 @@ function UI.CreateLayout()
     UI.header:SetScript("OnEvent", refreshInfo)
     UI.timer = C_Timer.NewTicker(1, tickClock)
     refreshInfo()
-    for _, spec in ipairs(bars) do
-        spec.anchor = CreateFrame("Frame", nil, UIParent)
-        spec.anchor:SetSize(264, 36)
-    end
-    -- Keep the game's action buttons, bindings, paging, cooldowns and flyouts.
-    -- Only arrange visible native bars; never force-show a bar hidden by a secure driver.
     UI.mapAnchor = CreateFrame("Frame", nil, UIParent)
     UI.mapAnchor:SetSize(240, 240)
     pcall(function()
@@ -219,13 +216,16 @@ function UI.CreateLayout()
     UI.CreateClassPower()
     local stanceEvents = CreateFrame("Frame")
     stanceEvents:RegisterEvent("UPDATE_SHAPESHIFT_FORMS")
-    stanceEvents:SetScript("OnEvent", function() UI.PositionStances() end)
+    stanceEvents:SetScript("OnEvent", function()
+        if not InCombatLockdown() then skinActionBars() end
+    end)
     hideNative(PaladinPowerBarFrame)
     hideNative(PlayerFrame, true)
     hideNative(TargetFrameToT)
     hideNative(TargetFrame)
     hideNative(FocusFrame)
     hideNative(PlayerCastingBarFrame)
+    hideNative(OverlayPlayerCastingBarFrame)
     for i=1,#UI.bosses do hideNative(_G["Boss"..i.."TargetFrame"]) end
     hideNative(PetFrame)
     hideNative(PartyFrame)
@@ -235,103 +235,12 @@ function UI.CreateLayout()
     UI.MaskNativeGroupFrames()
     UI.WatchEditMode()
 end
-function UI.ArrangeBar(spec)
-    if InCombatLockdown() or spec.arranging then return end
-    spec.arranging = true
-    UI.Anchor(spec.anchor, spec.key, "BOTTOM", 0, spec.y, UI.combatAnchor, "BOTTOM")
-    local native = _G[spec.name]
-    UI.Foreign(native, function()
-        -- Fremde Blizzard-Leisten nur gesichert anfassen.
-        pcall(function()
-            if native:IsForbidden() then return end
-            native:SetScale(1)
-            native:SetSize(264, 36)
-            place(native, "BOTTOMLEFT", spec.anchor, "BOTTOMLEFT", 0, 0)
-        end)
-        -- Bewusst sieben sichtbare Plätze; die Plätze 8–12 bleiben ausgeblendet.
-        -- Wer das ändert, muss UI.SkinActionButton und ArrangeBar gemeinsam anpassen.
-        for i=1,12 do
-            local button = _G[spec.prefix..i]
-            if button and i > 7 then
-                -- A hidden secure parent survives Blizzard's button Show updates.
-                if not button.suiOverflowHidden then
-                    local ok = pcall(function()
-                        if button:IsForbidden() then error("forbidden") end
-                        local container = button.container
-                        hideNative(container and container ~= native and container or button)
-                    end)
-                    if ok then button.suiOverflowHidden = true end
-                end
-            elseif button then
-                -- Retail scales and positions a container around each button.
-                -- Keep that hierarchy (paging/visibility), normalize both levels.
-                pcall(function()
-                    if button:IsForbidden() then return end
-                    local container = button.container or button:GetParent()
-                    if container and container ~= native then
-                        local forbidden = container:IsForbidden()
-                        if not UI.Public(forbidden) or forbidden then return end
-                        container:SetScale(1)
-                        container:SetSize(36, 36)
-                        place(container, "BOTTOMLEFT", native, "BOTTOMLEFT", (i-1)*38, 0)
-                    end
-                    button:SetScale(1)
-                    button:SetSize(36, 36)
-                    place(button, "BOTTOMLEFT", native, "BOTTOMLEFT", (i-1)*38, 0)
-                end)
-                UI.SkinActionButton(button)
-            end
-
-        end
-        for _, key in ipairs({"EndCaps", "BorderArt", "Background"}) do
-            local region = native[key]
-            if region ~= nil then
-                pcall(function()
-                    if region:IsForbidden() then return end
-                    region:SetAlpha(0)
-                end)
-            end
-        end
-        if not spec.hooked and type(native.UpdateGridLayout) == "function" then
-            hooksecurefunc(native, "UpdateGridLayout", function() UI.ArrangeBar(spec) end)
-            spec.hooked = true
-        end
-    end)
-    if spec.key == "actions1" then UI.HideActionPager() end
-    spec.arranging = nil
-end
-function UI.HideActionPager()
-    if InCombatLockdown() then return end
-    pcall(function()
-        if not MainActionBar or MainActionBar:IsForbidden() then return end
-        local pager = MainActionBar.ActionBarPageNumber
-        if not pager or pager:IsForbidden() then return end
-        -- Keep native paging and bindings intact; only hide its mouse controls.
-        pager:SetAlpha(0)
-        pager:EnableMouse(false)
-        for _, key in ipairs({"UpButton", "DownButton"}) do
-            local button = pager[key]
-            if button then
-                pcall(function()
-                    if button:IsForbidden() then return end
-                    button:SetAlpha(0)
-                    button:EnableMouse(false)
-                end)
-            end
-        end
-    end)
-end
 function UI.ApplyLayout()
     if InCombatLockdown() then return end
     UI.WatchEditMode()
     UI.MaskNativeGroupFrames()
-    UI.HideActionPager()
     UI.PositionUnits()
-    for _, spec in ipairs(bars) do UI.ArrangeBar(spec) end
-    -- Weitere Leisten behalten ihre Sichtbarkeit und vollständige native Anordnung.
-    for _,prefix in ipairs({"MultiBarRightButton","MultiBarLeftButton","MultiBar5Button","MultiBar6Button","MultiBar7Button"}) do
-        for i=1,12 do UI.SkinActionButton(_G[prefix..i]) end
-    end
+    skinActionBars()
     UI.Anchor(UI.mapAnchor, "minimap", "TOPRIGHT", -4, -10)
     if MinimapCluster then
         pcall(function()
@@ -391,113 +300,10 @@ function UI.ApplyLayout()
     end)
     layoutClockAndCalendar()
     UI.PositionProgress()
-    place(UI.playerCastAnchor, "TOP", bars[2].anchor, "BOTTOM", 0, -15)
-    place(UI.playerCast, "TOP", UI.playerCastAnchor, "TOP", 0, 0)
+    positionPlayerCast()
     place(UI.targetCast, "BOTTOM", UI.target, "TOP", 0, 5)
     place(UI.focusCast, "TOP", UI.focus, "BOTTOM", 0, -24)
     for _, boss in ipairs(UI.bosses) do place(boss.cast, "TOP", boss, "BOTTOM", 0, -22) end
-    UI.PositionStances()
-    UI.PositionPetBar()
-    if not UI.barFourSizeHooked then
-        UI.Foreign(MultiBarRight,function(bar)
-            if type(bar.UpdateGridLayout)=="function" then
-                hooksecurefunc(bar,"UpdateGridLayout",UI.PositionStances)
-                UI.barFourSizeHooked=true
-            end
-        end)
-    end
-end
-
--- Button-Abmessungen in lokalen Punkten der Ziel-Leiste, inklusive
--- nativer/EditMode-Skalierung von Leiste 4.
-local function barFourButtonSize(target)
-    local width,height
-    UI.Foreign(_G.MultiBarRightButton1,function(button)
-        local w,h=button:GetWidth(),button:GetHeight()
-        local sourceScale,targetScale=button:GetEffectiveScale(),target:GetEffectiveScale()
-        for _,value in ipairs({w,h,sourceScale,targetScale}) do
-            if not UI.Public(value) or type(value)~="number" or value<=0 then return end
-        end
-        if not w or not h or not sourceScale or not targetScale then return end
-        width,height=w*sourceScale/targetScale,h*sourceScale/targetScale
-    end)
-    return width,height
-end
-
-function UI.PositionStances()
-    if InCombatLockdown() or not StanceBar or not MultiBarRight or UI.stanceBusy then return end
-    UI.stanceBusy = true
-    UI.Foreign(StanceBar, function()
-        UI.Foreign(MultiBarRight, function()
-            -- GetNumShapeshiftForms kann geheim sein: vor jeder Rechnung prüfen.
-            local count = GetNumShapeshiftForms and GetNumShapeshiftForms() or 0
-            if not UI.Public(count) or type(count) ~= "number" then count = 0 end
-            StanceBar:SetScale(1)
-            local w,h=barFourButtonSize(StanceBar)
-            if not w then return end
-            local step=w+2
-            StanceBar:SetSize(math.max(1,count*step-2),h)
-            place(StanceBar, "RIGHT", MultiBarRight, "LEFT", -8, 0)
-            for i=1,count do
-                local button = _G["StanceButton"..i]
-                UI.Foreign(button, function()
-                    local container = button.container
-                    UI.Foreign(container, function()
-                        container:SetScale(1)
-                        container:SetSize(w, h)
-                        place(container, "BOTTOMRIGHT", StanceBar, "BOTTOMRIGHT", -(i-1)*step, 0)
-                    end)
-                    button:SetScale(1)
-                    button:SetSize(w, h)
-                    place(button, "BOTTOMRIGHT", StanceBar, "BOTTOMRIGHT", -(i-1)*step, 0)
-                    UI.SkinActionButton(button)
-                end)
-            end
-            if not UI.stanceHooked and type(StanceBar.UpdateGridLayout) == "function" then
-                hooksecurefunc(StanceBar, "UpdateGridLayout", UI.PositionStances)
-                UI.stanceHooked = true
-            end
-        end)
-    end)
-    UI.stanceBusy = nil
-    UI.PositionPetBar()
-end
-
-function UI.PositionPetBar()
-    if InCombatLockdown() or not PetActionBar or not MultiBarRight or UI.petBarBusy then return end
-    UI.petBarBusy = true
-    UI.Foreign(PetActionBar, function()
-        UI.Foreign(MultiBarRight, function()
-            local forms = GetNumShapeshiftForms and GetNumShapeshiftForms() or 0
-            if not UI.Public(forms) or type(forms) ~= "number" then forms = 0 end
-            local hasStances = forms > 0 and UI.Foreign(StanceBar, function() end)
-            PetActionBar:SetScale(1)
-            local w,h=barFourButtonSize(PetActionBar)
-            if not w then return end
-            local step=w+2
-            PetActionBar:SetSize(10*step-2,h)
-            place(PetActionBar, "RIGHT", hasStances and StanceBar or MultiBarRight, "LEFT", -8, 0)
-            for i=1,10 do
-                local button = _G["PetActionButton"..i]
-                UI.Foreign(button, function()
-                    UI.Foreign(button.container, function()
-                        button.container:SetScale(1)
-                        button.container:SetSize(w, h)
-                        place(button.container, "BOTTOMLEFT", PetActionBar, "BOTTOMLEFT", (i-1)*step, 0)
-                    end)
-                    button:SetScale(1)
-                    button:SetSize(w, h)
-                    place(button, "BOTTOMLEFT", PetActionBar, "BOTTOMLEFT", (i-1)*step, 0)
-                    UI.SkinActionButton(button)
-                end)
-            end
-            if not UI.petBarHooked and type(PetActionBar.UpdateGridLayout) == "function" then
-                hooksecurefunc(PetActionBar, "UpdateGridLayout", UI.PositionPetBar)
-                UI.petBarHooked = true
-            end
-        end)
-    end)
-    UI.petBarBusy = nil
 end
 
 function UI.MaskNativeGroupFrames()

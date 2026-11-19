@@ -1,15 +1,31 @@
-local _, UI = ...
+local addonName, UI = ...
 local Style = UI.Style
+local castFade = "Interface\\AddOns\\" .. addonName .. "\\Media\\UnitFade.tga"
 -- Do not instantiate Blizzard's CastingBarMixin in addon execution: it branches
 -- on restricted interruptibility/timestamps. Native duration widgets handle time.
 function UI.CreateCastBar(parent, unit, width)
-    local frame = UI.Panel(parent, width, 18)
+    local frame
+    if unit == "player" then
+        frame = CreateFrame("Frame", nil, parent)
+        frame:SetSize(width, 18)
+        local background = frame:CreateTexture(nil, "BACKGROUND")
+        background:SetAllPoints(frame)
+        background:SetTexture(castFade)
+    else
+        frame = UI.Panel(parent, width, 18)
+    end
     frame.unit = unit
     frame.fill = CreateFrame("StatusBar", nil, frame)
     frame.fill:SetPoint("TOPLEFT", 1, -1)
     frame.fill:SetPoint("BOTTOMRIGHT", -1, 1)
     frame.fill:SetStatusBarTexture(Style.WHITE)
     frame.fill:SetStatusBarColor(unpack(Style.Color.bronze))
+    if unit == "player" then
+        local mask = frame.fill:CreateMaskTexture()
+        mask:SetAllPoints(frame.fill)
+        mask:SetTexture(castFade, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+        frame.fill:GetStatusBarTexture():AddMaskTexture(mask)
+    end
     local overlay = CreateFrame("Frame", nil, frame)
     overlay:SetAllPoints(frame)
     overlay:SetFrameLevel(frame.fill:GetFrameLevel()+1)

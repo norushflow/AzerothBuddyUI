@@ -91,13 +91,13 @@ function UI.CreateHolyPower()
     local powerType = Enum.PowerType.HolyPower
     local holder = CreateFrame("Frame", "AzerothBuddyUIHolyPower", UI.player)
     holder:SetSize(148, 10)
-    holder:SetPoint("BOTTOMLEFT", UI.player, "TOPLEFT", 0, 5)
+    holder:SetPoint("BOTTOMLEFT", UI.player, "TOPLEFT", Style.Spacing.gap, 5)
     holder.segments = {}
     for i=1,5 do
         local segment = CreateFrame("StatusBar", nil, holder)
         segment:SetSize(28, 8)
         segment:SetPoint("LEFT", holder, "LEFT", (i-1)*30, 0)
-        UI.StyleStatusBar(segment)
+        UI.StyleFadedBar(segment, true)
         segment:SetStatusBarColor(1, .78, .18)
         segment:SetMinMaxValues(i-1, i)
         holder.segments[i] = segment
@@ -168,13 +168,13 @@ function UI.CreateSoulShards()
     local powerType = Enum.PowerType.SoulShards
     local holder = CreateFrame("Frame", "AzerothBuddyUISoulShards", UI.player)
     holder:SetSize(148, 10)
-    holder:SetPoint("BOTTOMLEFT", UI.player, "TOPLEFT", 0, 5)
+    holder:SetPoint("BOTTOMLEFT", UI.player, "TOPLEFT", Style.Spacing.gap, 5)
     holder.segments = {}
     for i=1,5 do
         local segment = CreateFrame("StatusBar", nil, holder)
         segment:SetSize(28, 8)
         segment:SetPoint("LEFT", holder, "LEFT", (i-1)*30, 0)
-        UI.StyleStatusBar(segment)
+        UI.StyleFadedBar(segment, true)
         segment:SetStatusBarColor(.67, .42, .91)
         holder.segments[i] = segment
     end

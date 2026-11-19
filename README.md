@@ -1,4 +1,4 @@
-# AzerothBuddyUI 1.1.4
+# AzerothBuddyUI 1.1.5
 
 <p align="center"><img src="branding/icon-400.png" alt="AzerothBuddyUI" width="160" height="160"></p>
 
@@ -11,7 +11,7 @@ Eine übersichtliche Spieloberfläche mit eigenen Einheitentafeln, Zauberleisten
 ## Funktionen
 
 - Minimap mit nativem Tracking und Kalender.
-- Aktionsleisten und Fußleiste in einem gemeinsamen Layout.
+- Schwarzer Skin für die originalen Blizzard-Aktionsleisten. Position und Sichtbarkeit steuerst du in WoW.
 - Unified Dark Styling mit dunkelgrauen Flächen, dezenten Rahmen und einheitlichen Bedienelementen.
 - Das Chatfenster wird ausschließlich von WoW verwaltet; auch das Setup übernimmt seine vorhandenen Blizzard-Layoutdaten unverändert.
 - Spieler-, Ziel-, Fokus-, Gruppen- und Raidrahmen sowie Auren.
@@ -45,7 +45,7 @@ Auf jedem neuen Charakter und nach jedem Versionsupdate erscheint beim nächsten
 - `/abui on`: Setupfenster mit Überschreibwarnung öffnen.
 - `/abui off`: eigenes UI deaktivieren; `/abui reset`: Positionen zurücksetzen.
 - `/abui layoutstatus`: vorhandene und aktive Blizzard-Layouts anzeigen.
-- `/abui`: Leisten und Abklingzeitmanager manuell einrichten.
+- `/abui`: Befehlsübersicht anzeigen.
 
 Vor dem Setup den Blizzard-Bearbeitungsmodus schließen. Nach erfolgreicher Einrichtung **`/reload` selbst im Chat eingeben**. Das Addon löst aus der verzögerten Prüfung keinen geschützten Reload aus.
 

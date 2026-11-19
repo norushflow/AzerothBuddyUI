@@ -1,6 +1,7 @@
 local _, UI = ...
 local Style = UI.Style
 local Color = Style.Color
+local L = UI.L
 local skins = setmetatable({}, {__mode="k"})
 local tooltipNames = {"GameTooltip", "ItemRefTooltip", "ShoppingTooltip1", "ShoppingTooltip2", "ItemRefShoppingTooltip1", "ItemRefShoppingTooltip2"}
 
@@ -27,6 +28,20 @@ end
 
 function UI.InstallTooltips()
     for _, name in ipairs(tooltipNames) do UI.SkinTooltip(_G[name]) end
+    local spellType = Enum and Enum.TooltipDataType and Enum.TooltipDataType.Spell
+    if not UI.spellTooltipHooked and spellType and TooltipDataProcessor
+        and type(TooltipDataProcessor.AddTooltipPostCall) == "function" then
+        TooltipDataProcessor.AddTooltipPostCall(spellType, function(tooltip, data)
+            UI.Foreign(tooltip, function(native)
+                if not UI.Public(data) or type(data) ~= "table" then return end
+                local id = data.id
+                if UI.Public(id) and type(id) == "number" and id > 0 then
+                    native:AddLine(L["Zauber-ID %d"]:format(id), unpack(Color.muted, 1, 3))
+                end
+            end)
+        end)
+        UI.spellTooltipHooked = true
+    end
     if not UI.tooltipStyleHooked and type(SharedTooltip_SetBackdropStyle)=="function" then
         UI.tooltipStyleHooked = true
         hooksecurefunc("SharedTooltip_SetBackdropStyle", function(tooltip)

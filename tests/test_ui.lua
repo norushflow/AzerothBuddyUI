@@ -62,8 +62,11 @@ function methods:SetColorTexture(...) self.color={...} end
 function methods:SetBackdrop(info) self.backdropInfo=info end
 function methods:GetWidth() return self.width end
 function methods:GetHeight() return self.height end
+function methods:SetWidth(width) protected(self); self.width = width end
 function methods:SetAllPoints(f) self.all=f end
-function methods:GetCenter() return 500, 200 end
+function methods:GetCenter() return self.centerX or 500, 200 end
+function methods:GetBottom() return self.bottom or 200 end
+function methods:IsVisible() return self:IsShown() end
 function methods:GetEffectiveScale() return self.scale end
 function methods:SetScale(s) protected(self);self.scale=s end
 function methods:GetChildren()
@@ -101,6 +104,12 @@ function methods:SetFrameStrata(v) self.strata=v end
 function methods:SetParent(p) protected(self);self.parent=p end
 function methods:CreateFontString() return object(nil,self,"font") end
 function methods:CreateTexture() return object(nil,self,"texture") end
+function methods:CreateMaskTexture() return object(nil,self,"texture") end
+function methods:AddMaskTexture(mask) self.mask=mask end
+function methods:GetStatusBarTexture()
+    self.fillTexture=self.fillTexture or self:CreateTexture()
+    return self.fillTexture
+end
 function methods:SetText(v) self.text=v end
 function methods:SetFormattedText(fmt, ...) self.format=fmt;self.values={...} end
 function methods:SetMinMaxValues(a,b) self.min=a;self.max=b end
@@ -167,6 +176,14 @@ function UnitHealthPercent() return secret end
 function UnitName() return secret end
 function UnitClass(unit) if unit=="player" then return "Paladin", "PALADIN" end return nil, secret end
 Enum={PowerType={HolyPower=9}, LuaCurveType={Linear=0, Step=1}, StatusBarInterpolation={Immediate=0}, StatusBarTimerDirection={ElapsedTime=0,RemainingTime=1}}
+Enum.TooltipDataType = {Spell = 1}
+local spellTooltipPostCall
+TooltipDataProcessor = {
+    AddTooltipPostCall = function(kind, callback)
+        assert(kind == Enum.TooltipDataType.Spell and not spellTooltipPostCall)
+        spellTooltipPostCall = callback
+    end,
+}
 C_CurveUtil={CreateCurve=function()
     local curve={points={}}
     function curve:SetType(kind) self.curveType=kind end
@@ -298,7 +315,7 @@ local reloads=0
 function ReloadUI() reloads=reloads+1 end
 function HideUIPanel(f) f:Hide() end
 function ShowUIPanel(f) f:Show() end
-for _,name in ipairs({"FocusFrame","Boss1TargetFrame","Boss2TargetFrame","Boss3TargetFrame","Boss4TargetFrame","Boss5TargetFrame","TargetFrameToT","WarlockPowerFrame","MultiBarRight","MainActionBar","MultiBarBottomLeft","MultiBarBottomRight","ChatFrame1","Minimap","MinimapCluster","BuffFrame","MicroMenuContainer","PlayerFrame","TargetFrame","PartyFrame","CompactPartyFrame","CompactRaidFrameContainer","CompactRaidFrameManager","PetFrame","PlayerCastingBarFrame","PetActionBar","StanceBar","EditModeManagerFrame"}) do object(name,UIParent) end
+for _,name in ipairs({"FocusFrame","Boss1TargetFrame","Boss2TargetFrame","Boss3TargetFrame","Boss4TargetFrame","Boss5TargetFrame","TargetFrameToT","WarlockPowerFrame","MultiBarRight","MainActionBar","MultiBarBottomLeft","MultiBarBottomRight","ChatFrame1","Minimap","MinimapCluster","BuffFrame","MicroMenuContainer","PlayerFrame","TargetFrame","PartyFrame","CompactPartyFrame","CompactRaidFrameContainer","CompactRaidFrameManager","PetFrame","PlayerCastingBarFrame","OverlayPlayerCastingBarFrame","PetActionBar","StanceBar","EditModeManagerFrame"}) do object(name,UIParent) end
 for _,frame in ipairs({MainActionBar,MultiBarRight,MultiBarBottomLeft,MultiBarBottomRight,PetActionBar,StanceBar,ChatFrame1,Minimap,MinimapCluster,BuffFrame}) do editModeSystem(frame) end
 Minimap:SetSize(198,198) -- native retail geometry
 NineSliceUtil={ApplyLayoutByName=function(frame, layout) frame.nineSliceLayout=layout end}
@@ -348,6 +365,8 @@ for _,prefix in ipairs({"ActionButton","MultiBarBottomLeftButton","MultiBarBotto
     for i=1,12 do
         local container=object(nil,native); container.scale=1.5
         local f=object(prefix..i,container);f.secure=true;f.container=container;f.scale=1.4
+        f.SlotArt=object(nil,f,"texture")
+        function f.SlotArt:SetVertexColor(r,g,b) self.tint={r,g,b} end
     end
 end
 for _, button in ipairs({ActionButton1, MultiBarRightButton1}) do
@@ -510,15 +529,15 @@ end
 assert(UI.started and not UI.chatAnchor and UI.mapAnchor and not UI.Mover,
     "layout started without manual movers")
 assert(TimeManagerClockButton.alpha==0 and TimeManagerClockButton.mouse==false, "native clock hidden; footer remains clickable")
-for _,panel in ipairs({UI.footer, UI.header}) do
-    local r,g,b,a=unpack(panel.background.color)
+do
+    local r,g,b,a=unpack(UI.footer.background.color)
     assert(r==UI.Style.Color.strip[1] and r==g and g==b and a>0 and a<1,
-        "footer and minimap label use the central translucent dark grey")
-    for _,border in ipairs(panel.borders) do
-        assert(border.color[4]==0, "the strips have no visible border")
+        "footer uses the central translucent dark grey")
+    for _,border in ipairs(UI.footer.borders) do
+        assert(border.color[4]==0, "the footer has no visible border")
     end
-    for _,region in ipairs({panel:GetRegions()}) do
-        assert(region.atlas~="_UI-Frame-Metal-EdgeTop", "the strips no longer have a metal texture")
+    for _,region in ipairs({UI.footer:GetRegions()}) do
+        assert(region.atlas~="_UI-Frame-Metal-EdgeTop", "the footer has no metal texture")
     end
 end
 local calendarClicks, managerToggles=0,0
@@ -597,8 +616,7 @@ for _,step in ipairs(deferred) do step() end
 deferred={}
 
 local pager=MainActionBar.ActionBarPageNumber
-assert(pager.alpha==0 and pager.mouse==false)
-assert(pager.UpButton.mouse==false and pager.DownButton.mouse==false)
+assert(pager.alpha==nil and pager.mouse==nil and pager.UpButton.mouse==nil and pager.DownButton.mouse==nil)
 local function tooltipSkin(tooltip)
     for _,obj in ipairs(objects) do if obj.parent==tooltip and obj.all==tooltip then return obj end end
 end
@@ -625,6 +643,15 @@ local forbiddenTooltip=object(nil,UIParent)
 forbiddenTooltip.forbidden=true
 UI.SkinTooltip(forbiddenTooltip)
 assert(not tooltipSkin(forbiddenTooltip), "forbidden tooltip was modified")
+UI.InstallTooltips()
+GameTooltip:ClearLines()
+spellTooltipPostCall(GameTooltip, {id=116})
+assert(GameTooltip:NumLines()==1 and GameTooltip:GetLeftLine(1).text=="Zauber-ID 116")
+spellTooltipPostCall(GameTooltip, {id=secret})
+spellTooltipPostCall(GameTooltip, {id=0})
+spellTooltipPostCall(forbiddenTooltip, {id=116})
+assert(GameTooltip:NumLines()==1 and forbiddenTooltip:NumLines()==0)
+GameTooltip:ClearLines()
 local party=AzerothBuddyUI_party1Group
 for _,frame in ipairs({party,UI.raid[1]}) do
     combat=true
@@ -662,14 +689,6 @@ party.scripts.OnEnter(party)
 assert(GameTooltip.tooltipUnit=="unchanged")
 combat=false
 GameTooltip.forbidden=false
-combat=true
-pager.alpha=1
-UI.HideActionPager()
-assert(pager.alpha==1, "pager mutation must wait until combat ends")
-combat=false
-UI.HideActionPager()
-assert(pager.alpha==0)
-
 assert(#nativeAuraAnchors==45, "all five party and forty raid buttons need native debuffs")
 for _,args in ipairs(nativeAuraAnchors) do
     local frame=args.parent.parent
@@ -705,8 +724,8 @@ assert(UI.combatAnchor.point[1]=="CENTER" and UI.combatAnchor.point[4]==960
 assert(not AzerothBuddyUI.positions.player and not AzerothBuddyUI.positions.target
     and not AzerothBuddyUI.positions.actions1 and not AzerothBuddyUI.positions.group,
     "old positions must not override the new layout")
-assert(UI.group.point[1]=="TOP" and UI.group.point[2]==UI.playerCastAnchor
-    and UI.group.point[3]=="BOTTOM" and UI.group.point[5]==-20)
+assert(UI.group.point[1]=="TOP" and UI.group.point[2]==UI.combatAnchor
+    and UI.group.point[3]=="BOTTOM" and UI.group.point[5]==-48)
 
 
 -- Own raid grid: 40 secure slots, visible only inside a raid.
@@ -784,7 +803,29 @@ for _, entry in ipairs({
     assert(frame.health.texture==UI.Style.WHITE and frame.power.texture==UI.Style.WHITE,
         "unit frames use the original flat bar texture")
     checkUnitText(frame.name, nameSize, .92, .95, 1)
-    checkUnitText(frame.percent, percentSize, .2, 1, .05)
+    local mask = frame.health:GetStatusBarTexture().mask
+    local powerMask = frame.power:GetStatusBarTexture().mask
+    if frame.role then
+        checkUnitText(frame.percent, percentSize, .2, 1, .05)
+        assert(not frame.borders and not frame.healthSurface and mask and mask.all==frame.health
+            and mask.tex:find("GroupEdge.tga", 1, true),
+            "group frames use a short fade on the original class-colored fill")
+        assert(powerMask and powerMask.all==frame.power, "group resources use soft edges")
+        assert(frame.health.width==frame.width-4 and frame.health.height==frame.height-7
+            and frame.power.width==frame.width-4 and frame.power.height==2
+            and frame.power.point[4]==2 and frame.power.point[5]==4-frame.height,
+            "group frames keep their original bar geometry")
+    else
+        checkUnitText(frame.percent, percentSize, .96, .91, .81)
+        assert(not frame.borders and mask and mask.all==frame.health, "health bars have a fixed fade")
+        assert(powerMask and powerMask.all==frame.power, "resource bars have a fixed fade")
+        local surface = frame.healthSurface
+        assert(surface.value==frame.health.value and surface.max==frame.health.max
+            and surface.width==frame.width and surface.height < -frame.health.point[5],
+            "background health fill uses the same values above the lower meters")
+        assert(frame.health.width>frame.power.width and frame.health.height==frame.power.height
+            and frame.health.point[5]==frame.power.point[5], "bars share a baseline")
+    end
     checkUnitText(frame.percentWarn, percentSize, 1, .82, .1)
     checkUnitText(frame.percentLow, percentSize, .92, .12, .09)
     if frame.role then checkUnitText(frame.role, 11, .92, .95, 1) end
@@ -954,7 +995,10 @@ end
 assert(WarlockPowerFrame.parent==UIParent)
 assert(not UI.soulShards, "paladin must not get shards")
 assert(not ChatFrame1.fontSize and not ChatFrame1.point, "chat must remain untouched")
-assert(UI.info and UI.header, "native minimap zone header retained")
+assert(UI.header:GetParent()==Minimap and UI.info.text=="Testzone", "zone name stays on the minimap")
+for _,region in ipairs({UI.header:GetRegions()}) do
+    assert(region.kind~="texture", "zone name has no background texture")
+end
 assert(UI.targettarget.unit=="targettarget" and UI.targettarget.events.UNIT_TARGET=="target")
 assert(UI.targettarget.point[2]==UI.target and UI.targettarget.point[3]=="TOPRIGHT")
 assert(TargetFrameToT.parent.visibilityDriver=="hide")
@@ -975,54 +1019,52 @@ UI.targettarget:Show()
 UI.targettarget.scripts.OnEvent(UI.targettarget, "UNIT_TARGET", "target")
 UI.targettarget.Poll()
 assert(UI.targettarget.health.value==secret)
-for _,prefix in ipairs({"ActionButton","MultiBarBottomLeftButton","MultiBarBottomRightButton"}) do
+for _, native in ipairs({MainActionBar, MultiBarBottomLeft, MultiBarBottomRight, MultiBarRight}) do
+    assert(not native.point and native.parent==UIParent and native.width==100 and native.scale==1,
+        "action bars keep native geometry")
+end
+for _,prefix in ipairs({"ActionButton","MultiBarBottomLeftButton","MultiBarBottomRightButton","MultiBarRightButton"}) do
     for i=1,12 do
         local button=_G[prefix..i]
-        if i>7 then assert(button.container.parent.visibilityDriver=="hide")
-        else assert(not button.suiOverflowHidden) end
+        assert(button.SlotArt.tint[1]==.16 and button.shown and button.parent==button.container
+            and not button.point and button.scale==1.4 and button.container.scale==1.5,
+            "all native slots retain visibility and geometry and receive the black tint")
     end
-end
-assert(MainActionBar.width==264 and MainActionBar.point[2].width==264)
-for i=1,12 do
-    local button=_G["MultiBarRightButton"..i]
-    assert(button.abuiQuestSkin and not button.suiOverflowHidden)
-    assert(button.parent.parent==MultiBarRight and button.shown)
 end
 assert(UI.focus.unit=="focus" and UI.focus.events.PLAYER_FOCUS_CHANGED)
 assert(#UI.bosses==5 and UI.bosses[5].events.INSTANCE_ENCOUNTER_ENGAGE_UNIT)
 assert(FocusFrame.parent.visibilityDriver=="hide" and Boss5TargetFrame.parent.visibilityDriver=="hide")
-assert(PlayerCastingBarFrame.parent.visibilityDriver=="hide")
-assert(UI.playerCastAnchor.point[1]=="TOP" and UI.playerCastAnchor.point[2]==MultiBarBottomLeft.point[2]
-    and UI.playerCastAnchor.point[3]=="BOTTOM" and UI.playerCastAnchor.point[5]==-15)
+assert(PlayerCastingBarFrame.parent.visibilityDriver=="hide"
+    and OverlayPlayerCastingBarFrame.parent.visibilityDriver=="hide")
+assert(not UI.playerCast.borders and UI.playerCast.fill:GetStatusBarTexture().mask,
+    "player cast uses the same soft-edge treatment as standalone units")
+MainActionBar.scale = 1.5
+MainActionBar.centerX = 300
+MultiBarBottomLeft.centerX, MultiBarBottomLeft.bottom = 450, 170
+MultiBarBottomRight.centerX, MultiBarBottomRight.bottom = 900, 160
+UI.ApplyLayout()
+assert(UI.playerCast.width==150 and UI.playerCast.label.width==140, "cast width follows the native scale")
+assert(UI.playerCastAnchor.point[1]=="TOP" and UI.playerCastAnchor.point[2]==MultiBarBottomLeft
+    and UI.playerCastAnchor.point[3]=="BOTTOM" and UI.playerCastAnchor.point[5]==-12)
+MainActionBar.scale, MainActionBar.centerX = 1, nil
+MultiBarBottomLeft.centerX, MultiBarBottomLeft.bottom = nil, nil
+MultiBarBottomRight.centerX, MultiBarBottomRight.bottom = nil, nil
+UI.ApplyLayout()
 assert(UI.playerCast.point[2]==UI.playerCastAnchor and UI.playerCast.point[3]=="TOP"
     and UI.playerCast.point[5]==0)
-assert(StanceBar.point[2]==MultiBarRight and StanceBar.point[3]=="LEFT")
 for _,candidate in ipairs(objects) do
     if candidate.secure then
         assert(not dependsOn(candidate,UI.playerCast,{}), "secure unit anchored to visible cast bar")
     end
 end
-assert(StanceBar.width==3*(MultiBarRightButton1.width*MultiBarRightButton1.scale+2)-2 and StanceButton3.abuiQuestSkin)
-assert(ActionButton1.abuiQuestSkin and ActionButton1.checkedTexture, "questwatcher action skin")
-assert(#ActionButton1.abuiQuestSkin.edges==4 and ActionButton1.abuiQuestSkin.edges[1].color[1]==UI.Style.Color.border[1])
 for _, button in ipairs({ActionButton1, MultiBarRightButton1}) do
+    assert(not button.icon.point and not button.icon.texcoord and not button.checkedTexture)
     for _, key in ipairs({"cooldown", "chargeCooldown", "lossOfControlCooldown"}) do
         local cooldown=button[key]
-        assert(cooldown.all==button.icon and cooldown.swipe==UI.Style.WHITE
-            and cooldown.circularEdge==false and cooldown.swipeColor[4]==UI.Style.Color.cooldown[4],
-            "cooldown must fill the square icon at every action bar size")
-        assert(cooldown.duration==secret and cooldown.scripts.OnCooldownDone,
-            "native cooldown timing and completion must survive styling")
+        assert(not cooldown.all and not cooldown.swipe and cooldown.duration==secret
+            and cooldown.scripts.OnCooldownDone, "native cooldown art and timing stay intact")
     end
 end
-local skinCount=#objects
-UI.SkinActionButton(ActionButton1)
-assert(#objects==skinCount,"skin duplicated textures")
-local forbiddenAction=object(nil,UIParent,"Button");forbiddenAction.forbidden=true
-UI.SkinActionButton(forbiddenAction);assert(not forbiddenAction.abuiQuestSkin)
-local deferredAction=object(nil,UIParent,"Button")
-combat=true;UI.SkinActionButton(deferredAction);assert(not deferredAction.abuiQuestSkin)
-combat=false;UI.SkinActionButton(deferredAction);assert(deferredAction.abuiQuestSkin)
 assert(not UI.targetCast:IsShown())
 assert(UI.targetCast.fill.texture==UI.Style.WHITE, "cast bars use the original flat fill")
 for _,mode in ipairs({"cast","channel","empower","none"}) do
@@ -1032,7 +1074,7 @@ for _,mode in ipairs({"cast","channel","empower","none"}) do
     UI.playerCast:Refresh()
     UI.focusCast:Refresh()
     UI.bosses[1].cast:Refresh()
-    assert(UI.group.point[2]==UI.playerCastAnchor and UI.raidAnchor.point[2]==UI.group)
+    assert(UI.group.point[2]==UI.combatAnchor and UI.raidAnchor.point[2]==UI.group)
     if mode=="none" then
         assert(not UI.targetCast:IsShown() and not UI.playerCast:IsShown())
         assert(UI.playerCastAnchor:IsShown(), "static layout anchor must not follow cast visibility")
@@ -1241,24 +1283,8 @@ combat=true
 SlashCmdList.AZEROTHBUDDYUI("raidtest 40")
 assert(not UI.raidPreview:IsShown())
 combat=false
-assert(PetActionBar.point[2]==StanceBar and PetActionBar.point[3]=="LEFT")
--- Regression: our SetPoint must not leave an EditMode snap behind. Otherwise
--- StanceBar:HideOverride -> BreakSnappedFrames -> PetActionBar:BreakFrameSnap
--- clears the protected bar's point (in combat) and UpdateSystemAnchorInfo
--- crashes on nil offsetY.
-assert(not PetActionBar.snappedToFrame and not next(PetActionBar.snappedFrames),
-    "pet bar must not stay snapped to another EditMode system")
-assert(not StanceBar.snappedToFrame and not next(StanceBar.snappedFrames),
-    "stance bar must not stay snapped to another EditMode system")
-do
-    -- The harness must really model the snap contract, otherwise the checks above prove nothing.
-    local probe=object(nil,UIParent); editModeSystem(probe)
-    probe:SetPoint("LEFT",StanceBar,"RIGHT",0,0)
-    assert(probe.snappedToFrame==StanceBar and StanceBar.snappedFrames[probe], "snap contract not simulated")
-    probe:ClearAllPoints()
-    assert(not StanceBar.snappedFrames[probe] and not probe.snappedToFrame, "ClearAllPoints must drop the snap")
-end
-assert(PetActionButton10.width==MultiBarRightButton1.width*MultiBarRightButton1.scale and PetActionButton10.abuiQuestSkin)
+assert(not PetActionBar.point and not StanceBar.point
+    and PetActionButton10.parent==PetActionBar and StanceButton1.parent==StanceBar)
 assert(not EditModeManagerFrame.scripts.OnHide, "do not hook the protected manager")
 assert(not EditModeManagerFrame.abuiEditWatcher, "do not write watcher state to Blizzard")
 assert(editCallbacks["EditMode.Exit"], "edit mode exit callback must be installed")
@@ -1287,13 +1313,8 @@ assert(PetFrame.parent.visibilityDriver=="hide")
 assert(CompactRaidFrameContainer.parent==UIParent)
 assert(CompactRaidFrameManager.parent==UIParent)
 assert(UI.pet.visibilityDriver:find("@pet,exists",1,true))
-assert(ActionButton1:GetWidth()==36 and ActionButton1.container.scale==1 and ActionButton1.scale==1)
-assert(ActionButton2.point[4]-ActionButton1.point[4]==38)
-assert(MultiBarBottomLeft.point[2].point[5]==5)
-assert(MainActionBar.point[2].point[5]==43)
-assert(MultiBarBottomRight.point[2].point[5]==81)
 MainActionBar:UpdateGridLayout()
-assert(ActionButton2.container.scale==1, "restore layout after native grid updates")
+assert(ActionButton2.container.scale==1.5, "native grid updates keep control")
 assert(UI.player.health.value==secret and UI.player.health.max==secret)
 do
     local originals, counts = {}, {health=0, power=0}
@@ -1386,34 +1407,13 @@ assert(settingsWrites==0 and cvarWrites==0,"settings changed in combat")
 combat=false;SlashCmdList.AZEROTHBUDDYUI("hilfe")
 assert(settingsWrites==0 and cvarWrites==0,"help changed settings")
 SlashCmdList.AZEROTHBUDDYUI("")
-assert(settingsWrites==7 and cvarWrites==1 and cooldownValue=="0")
-for bar=2,8 do assert(settingsValues["PROXY_SHOW_ACTIONBAR_"..bar]==(bar<=4)) end
-SlashCmdList.AZEROTHBUDDYUI("")
-assert(settingsWrites==7 and cvarWrites==1,"redundant settings writes")
-settingsValues.PROXY_SHOW_ACTIONBAR_8=secret
-assert(not UI.ConfigureActionBars() and settingsWrites==7,"secret settings must abort before writes")
-settingsValues.PROXY_SHOW_ACTIONBAR_8=false
-local savedSettings=Settings;Settings=nil
-assert(not UI.ConfigureActionBars(),"missing Settings API reported success")
-Settings=savedSettings
-local savedSetter=C_CVar.SetCVar
-cooldownValue="1";C_CVar.SetCVar=function() end
-assert(not UI.ConfigureActionBars(),"rejected CVar reported success")
-C_CVar.SetCVar=savedSetter
--- F-18: GetNumShapeshiftForms kann geheim sein; Layout muss dabei nicht rechnen.
-local savedForms = GetNumShapeshiftForms
-GetNumShapeshiftForms = function() return secret end
-UI.PositionStances()
-UI.PositionPetBar()
-assert(StanceBar.point[2]==MultiBarRight, "secret form count falls back to stances off")
-GetNumShapeshiftForms = savedForms
+assert(settingsWrites==0 and cvarWrites==0 and cooldownValue=="1",
+    "plain slash command shows help without changing Blizzard settings")
 SlashCmdList.AZEROTHBUDDYUI("off")
 assert(not AzerothBuddyUI.enabled and reloads==1)
 print("PASS: disabled/combat startup, secure layout guards, raw secret forwarding, unit actions, visibility, positions, reset, off")
 
 assert(UI.mapAnchor.point[4]==-4, "map border must align two points from right edge")
-
-assert(MultiBarBottomRight.point[2].point[5]+36==112/2+38+46/2,"action top aligned with unit top")
 
 -- Audit 1.0: Ereignisschübe erhalten genau einen Nachlauf pro Auren-Host.
 combat=false;aurasRestricted=false
@@ -1426,22 +1426,6 @@ assert(#deferred-beforeTimers==1,"100 aura events must coalesce into one follow-
 local follow=table.remove(deferred);follow()
 auditHost.scripts.OnEvent(auditHost,"UNIT_AURA")
 assert(#deferred==beforeTimers+1,"next aura burst must be able to schedule again")
--- Ein unzugängliches Objekt darf weder beschrieben werden noch Busy festhalten.
-for _,case in ipairs({{StanceBar,UI.PositionStances,"stanceBusy"},{PetActionBar,UI.PositionPetBar,"petBarBusy"}}) do
-    local frame,position,key=unpack(case)
-    local original=frame.SetScale
-    local calls=0
-    frame.SetScale=function(...) calls=calls+1;return original(...) end
-    frame.forbidden=true
-    assert(pcall(position) and calls==0 and not UI[key],"forbidden bar must be skipped")
-    frame.forbidden=false
-    frame.SetScale=function() error("simulated native failure") end
-    assert(pcall(position) and not UI[key],"layout failure must release busy")
-    frame.SetScale=function(...) calls=calls+1;return original(...) end
-    position()
-    assert(calls>0 and not UI[key],"layout must recover without reload")
-    frame.SetScale=original
-end
 local tooltipOwner=GameTooltip.SetOwner
 GameTooltip.forbidden=true
 GameTooltip.SetOwner=function() error("forbidden tooltip was touched") end
@@ -1461,15 +1445,6 @@ do
 end
 GameTooltip.forbidden=false;GameTooltip.SetOwner=tooltipOwner
 print("PASS: aura burst coalescing, native bar isolation/recovery and aura tooltip guard")
-
--- Native Größe und Skalierung von Leiste 4 sind die gemeinsame Referenz.
-combat=false
-MultiBarRightButton1:SetSize(40,40);MultiBarRightButton1:SetScale(1.25)
-UI.PositionStances();UI.PositionPetBar()
-assert(StanceButton1.width==50 and StanceButton1.height==50)
-assert(PetActionButton10.width==50 and PetActionButton10.height==50)
-assert(PetActionBar.width==518 and PetActionBar.height==50)
-print('PASS: stance/forms and pet buttons match scaled bar four')
 
 -- Exercise all layout triggers, then the deferred login/zone/scale callbacks.
 combat = false

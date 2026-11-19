@@ -21,12 +21,11 @@ function UI.RaidTest(argument)
         panel:SetFrameStrata("DIALOG")
         panel.cells = {}
         for i=1,40 do
-            local cell = UI.Panel(panel, 56, 58)
+            local cell = CreateFrame("Frame", nil, panel)
+            cell:SetSize(56, 58)
+            UI.CreateGroupMeters(cell, 56, 58)
             local color = RAID_CLASS_COLORS[classes[(i-1)%#classes+1]] or {r=.2,g=.6,b=.8}
-            local health = CreateFrame("StatusBar", nil, cell)
-            health:SetPoint("TOPLEFT", 2, -2)
-            health:SetSize(52, 51)
-            UI.StyleStatusBar(health)
+            local health, power = cell.health, cell.power
             health:SetStatusBarColor(color.r, color.g, color.b)
             health:SetMinMaxValues(0, 100)
             local percent = 100 - ((i*7)%45)
@@ -37,10 +36,8 @@ function UI.RaidTest(argument)
             UI.UnitText(overlay, 10, "CENTER", 0, 6):SetFormattedText("Raid %02d", i)
             local label = UI.UnitText(overlay, 11, "BOTTOM", 0, 17, .2, 1, .05)
             label:SetFormattedText("%d%%", percent)
-            local power = cell:CreateTexture(nil, "ARTWORK")
-            power:SetPoint("BOTTOMLEFT", 2, 2)
-            power:SetSize(52, 2)
-            power:SetColorTexture(.15, .55, 1, 1)
+            power:SetStatusBarColor(.15, .55, 1)
+            power:SetValue(1)
             -- Static sample debuffs only; preview never registers live unit auras.
             cell.debuffIcons = {}
             for j, texture in ipairs({"Spell_Shadow_ShadowWordPain", "Spell_Frost_FrostNova", "Ability_Poisons"}) do

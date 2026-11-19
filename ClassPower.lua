@@ -1,4 +1,5 @@
 local _, UI = ...
+local Style = UI.Style
 local defaultColor = {r=.2,g=.55,b=.9}
 local bloodColor = {r=.8,g=.16,b=.24}
 local unholyColor = {r=.35,g=.8,b=.25}
@@ -10,11 +11,11 @@ function UI.CreateClassPower()
     if not UI.Public(class) or class == "PALADIN" or class == "WARLOCK" then return end
     local holder = CreateFrame("Frame", "AzerothBuddyUIClassPower", UI.player)
     holder:SetSize(148, 10)
-    holder:SetPoint("BOTTOMLEFT", UI.player, "TOPLEFT", 0, 5)
+    holder:SetPoint("BOTTOMLEFT", UI.player, "TOPLEFT", Style.Spacing.gap, 5)
     holder.segments = {}
     for i=1,10 do
         local segment = CreateFrame("StatusBar", nil, holder)
-        UI.StyleStatusBar(segment)
+        UI.StyleFadedBar(segment, true)
         holder.segments[i] = segment
     end
     local function layout(count)
