@@ -1,3 +1,4 @@
-# v1.1.6
+# v1.1.7
 
-- Correct the bundled 3440 × 1440 Edit Mode layout for Retail.
+- Added layouts for 1920 × 1080 and 2560 × 1440.
+- Added a Reload UI button after setup.
