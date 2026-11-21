@@ -15,6 +15,7 @@ Eine übersichtliche Spieloberfläche mit eigenen Einheitentafeln, Zauberleisten
 - Unified Dark Styling mit dunkelgrauen Flächen, dezenten Rahmen und einheitlichen Bedienelementen.
 - Das Chatfenster wird ausschließlich von WoW verwaltet; auch das Setup übernimmt seine vorhandenen Blizzard-Layoutdaten unverändert.
 - Spieler-, Ziel-, Fokus-, Gruppen- und Raidrahmen sowie Auren.
+- Die Spielerzauberleiste folgt Position und Breite der Aktionsleisten. Tooltips zeigen verfügbare Zauber-IDs.
 - Mitgeliefertes Layout für den Blizzard-Bearbeitungsmodus.
 
 ## Sprachen und aktueller Stand
