@@ -87,7 +87,14 @@ assert(reloads == 0 and UI.welcome.shown, "failed setup stays retryable")
 allowImport = true
 UI.welcome.setupButton.OnClick()
 assert(reloads == 0 and AzerothBuddyUI.enabled and AzerothBuddyUICharDB.welcomeVersion, "setup must not reload from completion callback")
-assert(UI.welcome.description.text:find("/reload",1,true) and not UI.welcome.setupButton.shown, "completion asks for manual reload")
+assert(UI.welcome.description.text:find("/reload",1,true) and UI.welcome.setupButton.shown, "completion shows the reload button")
+assert(UI.welcome.setupButton.text == UI.L["UI neu laden"])
+combat = true
+UI.welcome.setupButton.OnClick()
+assert(reloads == 0, "reload button must respect combat guard")
+combat = false
+UI.welcome.setupButton.OnClick()
+assert(reloads == 1, "only the button click triggers UI reload")
 UI.welcome.closeButton.OnClick()
 events.OnEvent(events, "PLAYER_REGEN_ENABLED")
 assert(not UI.welcome.shown, "dismissed welcome must not reopen")
