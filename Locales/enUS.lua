@@ -1,6 +1,14 @@
 local _, addon = ...
 -- English is the default for enUS, enGB and all unsupported locales.
 addon.L = {
+    ["Abklingzeitmanager konnte nicht deaktiviert werden. Bitte die WoW-Optionen prüfen."] = "Could not disable the Cooldown Manager. Check the WoW options.",
+    ["Aktionsleisten 2 bis 4 wurden nicht bestätigt. Bitte die WoW-Optionen prüfen."] = "Action bars 2 through 4 could not be confirmed. Check the WoW options.",
+    ["Norushflow-Preset übernehmen"] = "Apply Norushflow preset",
+    ["Übernehmen"] = "Apply",
+    ["Ohne Preset"] = "Skip preset",
+    ["Das Norushflow-Preset überschreibt ausgewählte WoW-Interface-Optionen, darunter die Zielerfassung für Aktionen, Namensplaketten und Taschen. Manche Änderungen können auch andere Charaktere betreffen. Möchtest du es übernehmen?"] = "The Norushflow preset overwrites selected WoW interface options, including Action Targeting, nameplates, and bags. Some changes may also affect other characters. Apply the preset?",
+    ["Norushflow-Preset übernommen."] = "Norushflow preset applied.",
+    ["Norushflow-Preset: %d von %d Optionen übernommen. Erneut über das Setup versuchen."] = "Norushflow preset: %d of %d options applied. You can retry from setup.",
     ["Zauber-ID %d"] = "Spell ID %d",
     [" [aktiv]"] = " [active]",
     [", ausgewählt"] = ", selected",

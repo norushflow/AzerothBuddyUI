@@ -58,12 +58,14 @@ local function reset(existing)
             end
             assert(exportedChat, "full user export must be retained as supplied")
             assert(exportedBars["0"].anchorInfo.offsetX==0 and exportedBars["0"].anchorInfo.offsetY==-243.7)
-            assert(exportedBars["1"].anchorInfo.relativeTo=="MainActionBar" and exportedBars["1"].anchorInfo.offsetY==-4)
-            assert(exportedBars["2"].anchorInfo.relativeTo=="MainActionBar" and exportedBars["2"].anchorInfo.offsetY==4)
             if screenWidth == 3440 then
-                assert(exportedBars["10"].anchorInfo.offsetX==1369.3 and exportedBars["10"].anchorInfo.offsetY==-742.1)
+                assert(value:find("0 1 0 6 0 MainActionBar 0.0 4.0", 1, true))
+                assert(value:find("0 2 0 2 8 MainActionBar 0.0 -4.0", 1, true))
+                assert(value:find("0 10 0 4 4 UIParent 0.0 -160.0", 1, true))
                 assert(value:find("3 4 0 0 0 UIParent 1943.0 -928.5", 1, true))
             else
+                assert(value:find("0 1 0 0 6 MainActionBar 0.0 -4.0", 1, true))
+                assert(value:find("0 2 0 8 2 MainActionBar 0.0 4.0", 1, true))
                 assert(exportedBars["10"].anchorInfo.offsetX==0 and exportedBars["10"].anchorInfo.offsetY==-158.8)
                 assert(value:find("3 4 0 0 0 UIParent 1349.3 -928.5", 1, true))
             end
@@ -86,7 +88,9 @@ local function reset(existing)
     }
     EditModeManagerFrame={layoutInfo={activeLayout=3,layouts=cache},
         IsForbidden=function() return forbidden end, IsShown=function() return shown end,
-        ImportLayout=function(_,data,kind,title)
+        CreateLayoutTbls=function(self) self.highestLayoutIndexByType = {} end,
+        ImportLayout=function(self,data,kind,title)
+            assert(self.highestLayoutIndexByType, "first import requires Blizzard's layout index")
             checkChat(data)
             imports=imports+1;data.layoutName=title;data.layoutType=kind
             raw[#raw+1]=data;cache[#raw+2]=data
@@ -190,3 +194,12 @@ reset(true)
 assert(not UI.EnableEditLayout() and saves==0 and imports==0 and writes==0)
 screenWidth,screenHeight=3440,1440
 print("PASS: 16:9 2560x1440 and 1920x1080 profiles and unsupported-resolution protection")
+
+reset(false)
+local reported
+EventRegistry = {TriggerEvent = function(_, event, source, reason)
+    assert(event == "BuddyReport.HandledError" and source == "AzerothBuddyUI")
+    reported = reason
+end}
+EditModeManagerFrame.ImportLayout = function() error("Blizzard import failed") end
+assert(not UI.EnableEditLayout() and reported:find("Blizzard import failed", 1, true))

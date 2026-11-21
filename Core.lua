@@ -212,14 +212,69 @@ function UI.Start()
     raidState = (IsInRaid and IsInRaid()) and true or false
     UI.Message(L["Version %s geladen. /abui zeigt die Befehle."]:format(UI.VERSION))
 end
+local waitingForActionBars
+local actionBarFailure = "Aktionsleisten 2 bis 4 wurden nicht bestätigt. Bitte die WoW-Optionen prüfen."
+
+local function finishSetup()
+    local viewerDisabled = pcall(function()
+        local key = "cooldownViewerEnabled"
+        local value = C_CVar.GetCVar(key)
+        assert(UI.Public(value) and type(value) == "string")
+        if value ~= "0" then
+            C_CVar.SetCVar(key, "0")
+            value = C_CVar.GetCVar(key)
+            assert(UI.Public(value) and value == "0")
+        end
+    end)
+    if not viewerDisabled then UI.Message(L["Abklingzeitmanager konnte nicht deaktiviert werden. Bitte die WoW-Optionen prüfen."]) end
+    UI.GetCharacterSettings().welcomeVersion = UI.VERSION
+    AzerothBuddyUI.enabled = true
+    UI.ShowSetupComplete()
+end
+
+local function confirmActionBars(remaining)
+    if InCombatLockdown() then
+        waitingForActionBars = nil
+        UI.Message(L["Bitte nach dem Kampf erneut versuchen."])
+        return
+    end
+    local ok, bar2, bar3, bar4 = pcall(GetActionBarToggles)
+    if ok and UI.Public(bar2) and UI.Public(bar3) and UI.Public(bar4)
+        and bar2 == true and bar3 == true and bar4 == true then
+        waitingForActionBars = nil
+        finishSetup()
+    elseif remaining > 0 and ok then
+        C_Timer.After(0.2, function() confirmActionBars(remaining - 1) end)
+    else
+        waitingForActionBars = nil
+        UI.Message(L[actionBarFailure])
+    end
+end
+
 -- Called only by the explicit setup button after displaying the overwrite warning.
 function UI.RunSetup()
     if InCombatLockdown() then UI.Message(L["Bitte nach dem Kampf erneut versuchen."]); return end
-    if not UI.EnableEditLayout() then return end
+    if waitingForActionBars or not UI.EnableEditLayout() then return end
     UI.CompleteEditLayoutSetup(function()
-        UI.GetCharacterSettings().welcomeVersion = UI.VERSION
-        AzerothBuddyUI.enabled = true
-        UI.ShowSetupComplete()
+        if InCombatLockdown() then
+            UI.Message(L["Bitte nach dem Kampf erneut versuchen."])
+            return
+        end
+        local ok = pcall(function()
+            local bar2, bar3, bar4, bar5, bar6, bar7, bar8 = GetActionBarToggles()
+            local toggles = {bar2, bar3, bar4, bar5, bar6, bar7, bar8}
+            for index = 1, 7 do
+                local enabled = toggles[index]
+                assert(UI.Public(enabled) and type(enabled) == "boolean")
+            end
+            if not (bar2 and bar3 and bar4) then
+                -- Send all visibility flags together so the server receives one mask.
+                SetActionBarToggles(true, true, true, bar5, bar6, bar7, bar8)
+            end
+        end)
+        if not ok then UI.Message(L[actionBarFailure]); return end
+        waitingForActionBars = true
+        confirmActionBars(10)
     end)
 end
 

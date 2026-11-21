@@ -1,6 +1,14 @@
 local _, addon = ...
 if not GetLocale or GetLocale() ~= "deDE" then return end
 local L = addon.L
+L["Abklingzeitmanager konnte nicht deaktiviert werden. Bitte die WoW-Optionen prüfen."] = "Abklingzeitmanager konnte nicht deaktiviert werden. Bitte die WoW-Optionen prüfen."
+L["Aktionsleisten 2 bis 4 wurden nicht bestätigt. Bitte die WoW-Optionen prüfen."] = "Aktionsleisten 2 bis 4 wurden nicht bestätigt. Bitte die WoW-Optionen prüfen."
+L["Norushflow-Preset übernehmen"] = "Norushflow-Preset übernehmen"
+L["Übernehmen"] = "Übernehmen"
+L["Ohne Preset"] = "Ohne Preset"
+L["Das Norushflow-Preset überschreibt ausgewählte WoW-Interface-Optionen, darunter die Zielerfassung für Aktionen, Namensplaketten und Taschen. Manche Änderungen können auch andere Charaktere betreffen. Möchtest du es übernehmen?"] = "Das Norushflow-Preset überschreibt ausgewählte WoW-Interface-Optionen, darunter die Zielerfassung für Aktionen, Namensplaketten und Taschen. Manche Änderungen können auch andere Charaktere betreffen. Möchtest du es übernehmen?"
+L["Norushflow-Preset übernommen."] = "Norushflow-Preset übernommen."
+L["Norushflow-Preset: %d von %d Optionen übernommen. Erneut über das Setup versuchen."] = "Norushflow-Preset: %d von %d Optionen übernommen. Erneut über das Setup versuchen."
 L["Zauber-ID %d"] = "Zauber-ID %d"
 L[" [aktiv]"] = " [aktiv]"
 L[", ausgewählt"] = ", ausgewählt"
