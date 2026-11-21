@@ -8,6 +8,14 @@ Eine übersichtliche Spieloberfläche mit eigenen Einheitentafeln, Zauberleisten
 
 **Layout-Auflösung:** Das Setup unterstützt **3440 × 1440 (Ultrawide)**, **2560 × 1440** und **1920 × 1080** und wählt die passende Vorlage.
 
+[Wago](https://addons.wago.io/addons/azerothbuddyui) · [CurseForge](https://www.curseforge.com/wow/addons/azerothbuddyui) · [GitHub Releases](https://github.com/norushflow/AzerothBuddyUI/releases)
+
+## Einblicke
+
+[![Retail-Oberfläche mit Einheitentafeln, Aktionsleisten und Minimap](branding/screenshots/overview.webp)](branding/screenshots/overview.webp)
+
+[Retail-Oberfläche im Kampf](branding/screenshots/combat.webp) · [Gruppen- und Schlachtzugsfenster in Retail](branding/screenshots/raid.webp)
+
 ## Funktionen
 
 - Minimap mit nativem Tracking und Kalender.
