@@ -42,17 +42,26 @@ function UI.ShowWelcome(force)
         panel.closeButton = close
         UI.welcome = panel
     end
-    UI.welcome.description:SetText("Version " .. UI.VERSION .. L["\nLayout für 3440 × 1440 Pixel.\n\nDas Layout AzerothBuddyUI wird durch die mitgelieferte Vorlage ersetzt. Eigene Änderungen an diesem Layout gehen verloren. Andere Layouts bleiben erhalten.\n\nBitte vorher den Bearbeitungsmodus schließen."])
+    UI.welcome.description:SetText("Version " .. UI.VERSION .. L["\nLayoutvorlagen für 3440 × 1440, 2560 × 1440 und 1920 × 1080 Pixel.\n\nDas Layout AzerothBuddyUI wird durch die passende Vorlage ersetzt. Eigene Änderungen an diesem Layout gehen verloren. Andere Layouts bleiben erhalten.\n\nBitte vorher den Bearbeitungsmodus schließen."])
     UI.welcome.setupButton:Show()
     UI.welcome:Show()
     character.welcomeVersion = UI.VERSION
 end
 
 function UI.ShowSetupComplete()
-    UI.Message(L["Layout eingerichtet. Bitte jetzt /reload eingeben."])
+    UI.Message(L["Layout eingerichtet. Zum Abschließen die UI neu laden oder /reload eingeben."])
     if UI.welcome then
-        UI.welcome.description:SetText(L["Layout erfolgreich eingerichtet.\n\nBitte jetzt /reload im Chat eingeben, um die Einrichtung abzuschließen."])
-        UI.welcome.setupButton:Hide()
+        UI.welcome.description:SetText(L["Layout eingerichtet. Zum Abschließen die UI neu laden oder /reload eingeben."])
+        local button = UI.welcome.setupButton
+        button:SetText(L["UI neu laden"])
+        button:SetScript("OnClick", function()
+            if InCombatLockdown() then
+                UI.Message(L["Bitte nach dem Kampf erneut versuchen."])
+                return
+            end
+            ReloadUI()
+        end)
+        button:Show()
         UI.welcome:Show()
     end
 end

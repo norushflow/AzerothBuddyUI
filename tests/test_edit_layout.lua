@@ -1,4 +1,6 @@
 local loadfile = dofile("tests/load_locales.lua")
+local screenWidth, screenHeight = 3440, 1440
+function GetPhysicalScreenSize() return screenWidth, screenHeight end
 local combat, shown, forbidden = false, false, false
 function InCombatLockdown() return combat end
 local UI={Message=function() end}
@@ -58,7 +60,13 @@ local function reset(existing)
             assert(exportedBars["0"].anchorInfo.offsetX==0 and exportedBars["0"].anchorInfo.offsetY==-243.7)
             assert(exportedBars["1"].anchorInfo.relativeTo=="MainActionBar" and exportedBars["1"].anchorInfo.offsetY==-4)
             assert(exportedBars["2"].anchorInfo.relativeTo=="MainActionBar" and exportedBars["2"].anchorInfo.offsetY==4)
-            assert(exportedBars["10"].anchorInfo.offsetX==1369.3 and exportedBars["10"].anchorInfo.offsetY==-742.1)
+            if screenWidth == 3440 then
+                assert(exportedBars["10"].anchorInfo.offsetX==1369.3 and exportedBars["10"].anchorInfo.offsetY==-742.1)
+                assert(value:find("3 4 0 0 0 UIParent 1943.0 -928.5", 1, true))
+            else
+                assert(exportedBars["10"].anchorInfo.offsetX==0 and exportedBars["10"].anchorInfo.offsetY==-158.8)
+                assert(value:find("3 4 0 0 0 UIParent 1349.3 -928.5", 1, true))
+            end
             if invalid then return nil end
             return {systems={{template=true},exportedChat}}
         end,
@@ -170,3 +178,15 @@ EditModeManagerFrame.ImportLayout = function(self, layout, ...)
     return import(self, layout, ...)
 end
 assert(UI.EnableEditLayout())
+
+for _, size in ipairs({{2560,1440},{1920,1080}}) do
+    screenWidth, screenHeight = size[1], size[2]
+    reset(true)
+    assert(UI.EnableEditLayout() and saves==1 and imports==0)
+    complete();drain();assert(completed==1)
+end
+screenWidth,screenHeight=1600,900
+reset(true)
+assert(not UI.EnableEditLayout() and saves==0 and imports==0 and writes==0)
+screenWidth,screenHeight=3440,1440
+print("PASS: 16:9 2560x1440 and 1920x1080 profiles and unsupported-resolution protection")
