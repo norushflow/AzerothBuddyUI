@@ -55,10 +55,10 @@ local function reset(existing)
                 end
             end
             assert(exportedChat, "full user export must be retained as supplied")
-            assert(exportedBars["0"].anchorInfo.offsetX==1286.2 and exportedBars["0"].anchorInfo.offsetY==-821)
+            assert(exportedBars["0"].anchorInfo.offsetX==0 and exportedBars["0"].anchorInfo.offsetY==-243.7)
             assert(exportedBars["1"].anchorInfo.relativeTo=="MainActionBar" and exportedBars["1"].anchorInfo.offsetY==-4)
             assert(exportedBars["2"].anchorInfo.relativeTo=="MainActionBar" and exportedBars["2"].anchorInfo.offsetY==4)
-            assert(exportedBars["10"].anchorInfo.offsetX==1386.3 and exportedBars["10"].anchorInfo.offsetY==-740.8)
+            assert(exportedBars["10"].anchorInfo.offsetX==1369.3 and exportedBars["10"].anchorInfo.offsetY==-742.1)
             if invalid then return nil end
             return {systems={{template=true},exportedChat}}
         end,

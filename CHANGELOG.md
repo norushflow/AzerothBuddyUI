@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.6
+
+- Correct the bundled 3440 × 1440 Edit Mode layout for Retail.
+
 ## 1.1.5
 
 - Soften the edges of unit, group and raid frames, including the raid preview and class resources.
