@@ -2,6 +2,20 @@ local _, UI = ...
 local L = UI.L
 local layoutName = "AzerothBuddyUI"
 local layoutString = [=[2 52 0 0 0 4 4 UIParent 0.0 -243.7 -1 ##$$%*&''%)$+#,$ 0 1 0 0 6 MainActionBar 0.0 -4.0 -1 ##$$%*&''%(#,$ 0 2 0 8 2 MainActionBar 0.0 4.0 -1 ##$$%*&''%(#,$ 0 3 0 7 7 UIParent 1195.0 2.0 -1 ##$$%/&%'%(#,$ 0 4 1 5 5 UIParent -5.0 -77.0 -1 #$$$%/&('%(#,$ 0 5 1 1 4 UIParent 0.0 0.0 -1 ##$$%/&('%(#,$ 0 6 1 1 4 UIParent 0.0 -50.0 -1 ##$$%/&('%(#,$ 0 7 1 1 4 UIParent 0.0 -100.0 -1 ##$$%/&('%(#,$ 0 10 0 0 0 UIParent 1369.3 -742.1 -1 ##$$&('% 0 11 0 8 6 MultiBarRight -4.0 0.0 -1 ##$$&('%,# 0 12 0 5 3 MinimapCluster -4.0 -44.5 -1 #$$$&('% 1 -1 1 4 4 UIParent 0.0 0.0 -1 ##$#%# 2 -1 1 2 2 UIParent 0.0 0.0 -1 ##$#%(&( 3 0 1 8 7 UIParent -300.0 250.0 -1 $#3# 3 1 1 6 7 UIParent 300.0 250.0 -1 %#3# 3 2 1 6 7 UIParent 520.0 265.0 -1 %#&#3# 3 3 0 0 0 UIParent 1851.0 -940.0 -1 '$(#)#-=.+/#1$3#5#6(7-7$8(9( 3 4 0 0 0 UIParent 1943.0 -928.5 -1 ,%-=.+/#0#1#2(3#5#6(7-7$8(9( 3 5 0 2 2 UIParent -270.0 -293.0 -1 &#*$3# 3 6 1 5 5 UIParent 0.0 0.0 -1 -=.+/#4$5#6(7-7$8(9( 3 7 1 4 4 UIParent 0.0 0.0 -1 3# 4 -1 0 4 4 UIParent 0.0 398.3 -1 # 5 -1 0 4 4 UIParent 473.0 -500.0 -1 # 6 0 1 2 2 UIParent -255.0 -10.0 -1 ##$#%#&.(()( 6 1 0 4 4 UIParent -297.5 -87.5 -1 ##$#%#'+(()(-$ 6 2 1 1 1 UIParent 0.0 -25.0 -1 ##$#%$&.(()(+#,-,$ 7 -1 0 4 4 UIParent 0.0 485.8 -1 # 8 -1 1 6 6 UIParent 35.0 50.0 -1 #'$A%$&i 9 -1 0 5 3 MinimapCluster -4.0 -98.8 -1 # 10 -1 1 0 0 UIParent 16.0 -116.0 -1 # 11 -1 0 5 5 UIParent -2.0 -275.0 -1 # 12 -1 0 3 3 UIParent 32.0 145.6 -1 #K$#%% 13 -1 0 0 0 UIParent 2.0 -0.0 -1 ##$#%/&- 14 -1 0 5 5 UIParent -1.5 -580.8 -1 ##$#%# 15 0 0 5 5 UIParent -39.0 179.7 -1 &- 15 1 0 0 6 Minimap 0.0 -23.0 -1 &- 16 -1 0 2 8 SecondaryStatusTrackingBarContainer 0.0 -4.0 -1 #( 17 -1 1 1 1 UIParent 0.0 -100.0 -1 ## 18 -1 0 2 8 SecondaryStatusTrackingBarContainer 0.0 -4.0 -1 #- 19 -1 1 7 7 UIParent 0.0 0.0 -1 ## 20 0 1 7 7 UIParent 0.0 310.0 -1 ##$/%$&('%(-($)#+$,$-$ 20 1 1 7 7 UIParent 0.0 240.0 -1 ##$*%$&('%(-($)#+$,$-$ 20 2 1 7 7 UIParent 0.0 370.0 -1 ##$$%$&('((-($)#+$,$-$ 20 3 1 7 7 UIParent 420.0 430.0 -1 #$$$%#&('((-($)#*#+$,$-$.-.$ 21 -1 1 7 7 UIParent -410.0 380.0 -1 #$%$&$'((()#*-*$+#,&-$.#/(0#1# 22 0 1 8 7 UIParent -457.0 336.0 -1 #$$$%#&('((#)U*$+%,$-#.#/U0% 22 1 1 1 1 UIParent 0.0 -40.0 -1 &('()U*#+% 22 2 1 1 1 UIParent 0.0 -90.0 -1 &('()U*#+% 22 3 1 1 1 UIParent 0.0 -130.0 -1 &('()U*#+% 23 -1 0 5 5 UIParent -2.0 -480.8 -1 ##$#%$&7&%'7(%)U+$,$-$.(/U 24 -1 1 1 1 UIParent 0.0 -182.0 -1 # 26 -1 1 4 4 UIParent 0.0 0.0 -1 #(]=]
+-- Supported 16:9 screens use the supplied common Blizzard Edit Mode export.
+local layoutString16x9 = [=[2 52 0 0 0 4 4 UIParent 0.0 -243.7 -1 ##$$%*&''%)$+#,$ 0 1 0 0 6 MainActionBar 0.0 -4.0 -1 ##$$%*&''%(#,$ 0 2 0 8 2 MainActionBar 0.0 4.0 -1 ##$$%*&''%(#,$ 0 3 0 7 7 UIParent 1195.0 2.0 -1 ##$$%/&%'%(#,$ 0 4 1 5 5 UIParent -5.0 -77.0 -1 #$$$%/&('%(#,$ 0 5 1 1 4 UIParent 0.0 0.0 -1 ##$$%/&('%(#,$ 0 6 1 1 4 UIParent 0.0 -50.0 -1 ##$$%/&('%(#,$ 0 7 1 1 4 UIParent 0.0 -100.0 -1 ##$$%/&('%(#,$ 0 10 0 4 4 UIParent 0.0 -158.8 -1 ##$$&('% 0 11 0 8 6 MultiBarRight -4.0 0.0 -1 ##$$&('%,# 0 12 0 5 3 MinimapCluster -4.0 -44.5 -1 #$$$&('% 1 -1 1 4 4 UIParent 0.0 0.0 -1 ##$#%# 2 -1 1 2 2 UIParent 0.0 0.0 -1 ##$#%(&( 3 0 1 8 7 UIParent -300.0 250.0 -1 $#3# 3 1 1 6 7 UIParent 300.0 250.0 -1 %#3# 3 2 1 6 7 UIParent 520.0 265.0 -1 %#&#3# 3 3 0 0 0 UIParent 1851.0 -940.0 -1 '$(#)#-=.+/#1$3#5#6(7-7$8(9( 3 4 0 0 0 UIParent 1349.3 -928.5 -1 ,%-=.+/#0#1#2(3#5#6(7-7$8(9( 3 5 0 2 2 UIParent -270.0 -293.0 -1 &#*$3# 3 6 1 5 5 UIParent 0.0 0.0 -1 -=.+/#4$5#6(7-7$8(9( 3 7 1 4 4 UIParent 0.0 0.0 -1 3# 4 -1 0 4 4 UIParent 0.0 398.3 -1 # 5 -1 0 4 4 UIParent 473.0 -500.0 -1 # 6 0 1 2 2 UIParent -255.0 -10.0 -1 ##$#%#&.(()( 6 1 0 4 4 UIParent -297.5 -87.5 -1 ##$#%#'+(()(-$ 6 2 1 1 1 UIParent 0.0 -25.0 -1 ##$#%$&.(()(+#,-,$ 7 -1 0 4 4 UIParent 0.0 485.8 -1 # 8 -1 1 6 6 UIParent 35.0 50.0 -1 #'$A%$&i 9 -1 0 5 3 MinimapCluster -4.0 -98.8 -1 # 10 -1 1 0 0 UIParent 16.0 -116.0 -1 # 11 -1 0 5 5 UIParent -2.0 -275.0 -1 # 12 -1 0 3 3 UIParent 32.0 145.6 -1 #K$#%% 13 -1 0 0 0 UIParent 2.0 -0.0 -1 ##$#%/&- 14 -1 0 5 5 UIParent -1.5 -580.8 -1 ##$#%# 15 0 0 5 5 UIParent -39.0 179.7 -1 &- 15 1 0 0 6 Minimap 0.0 -23.0 -1 &- 16 -1 0 2 8 SecondaryStatusTrackingBarContainer 0.0 -4.0 -1 #( 17 -1 1 1 1 UIParent 0.0 -100.0 -1 ## 18 -1 0 2 8 SecondaryStatusTrackingBarContainer 0.0 -4.0 -1 #- 19 -1 1 7 7 UIParent 0.0 0.0 -1 ## 20 0 1 7 7 UIParent 0.0 310.0 -1 ##$/%$&('%(-($)#+$,$-$ 20 1 1 7 7 UIParent 0.0 240.0 -1 ##$*%$&('%(-($)#+$,$-$ 20 2 1 7 7 UIParent 0.0 370.0 -1 ##$$%$&('((-($)#+$,$-$ 20 3 1 7 7 UIParent 420.0 430.0 -1 #$$$%#&('((-($)#*#+$,$-$.-.$ 21 -1 1 7 7 UIParent -410.0 380.0 -1 #$%$&$'((()#*-*$+#,&-$.#/(0#1# 22 0 1 8 7 UIParent -457.0 336.0 -1 #$$$%#&('((#)U*$+%,$-#.#/U0% 22 1 1 1 1 UIParent 0.0 -40.0 -1 &('()U*#+% 22 2 1 1 1 UIParent 0.0 -90.0 -1 &('()U*#+% 22 3 1 1 1 UIParent 0.0 -130.0 -1 &('()U*#+% 23 -1 0 5 5 UIParent -2.0 -480.8 -1 ##$#%$&7&%'7(%)U+$,$-$.(/U 24 -1 1 1 1 UIParent 0.0 -182.0 -1 # 26 -1 1 4 4 UIParent 0.0 0.0 -1 #(]=]
+
+function UI.GetEditLayoutTemplate()
+    if type(GetPhysicalScreenSize) ~= "function" then return nil end
+    local width, height = GetPhysicalScreenSize()
+    if issecretvalue and (issecretvalue(width) or issecretvalue(height)) then return nil end
+    if width == 3440 and height == 1440 then return layoutString end
+    if (width == 2560 and height == 1440) or (width == 1920 and height == 1080) then
+        return layoutString16x9
+    end
+    return nil -- Unknown screen resolutions never silently overwrite a layout.
+end
+
 
 -- Explicit /abui on only; never change the selected layout during login.
 function UI.EnableEditLayout()
@@ -24,7 +38,9 @@ function UI.EnableEditLayout()
 
         end
         local index, active = findLayout()
-        local replacement = api.ConvertStringToLayoutInfo(layoutString)
+        local template = UI.GetEditLayoutTemplate()
+        assert(template, L["Bildschirmauflösung nicht unterstützt"])
+        local replacement = api.ConvertStringToLayoutInfo(template)
         assert(type(replacement) == "table" and type(replacement.systems) == "table" and #replacement.systems > 0, L["Vorlage ungültig"])
         local function copy(value)
             if type(value) ~= "table" then return value end
