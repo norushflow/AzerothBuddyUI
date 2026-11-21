@@ -6,7 +6,7 @@ Eine übersichtliche Spieloberfläche mit eigenen Einheitentafeln, Zauberleisten
 
 **Client:** WoW Retail / Midnight · **Interface:** 120105 · **Eigenständig:** keine zusätzlichen Addons erforderlich.
 
-**Layout-Auflösung:** Die mitgelieferte Vorlage ist für **3440 × 1440 Pixel (Ultrawide)** ausgelegt.
+**Layout-Auflösung:** Das Setup unterstützt **3440 × 1440 (Ultrawide)**, **2560 × 1440** und **1920 × 1080** und wählt die passende Vorlage.
 
 ## Funktionen
 
@@ -48,7 +48,7 @@ Auf jedem neuen Charakter und nach jedem Versionsupdate erscheint beim nächsten
 - `/abui layoutstatus`: vorhandene und aktive Blizzard-Layouts anzeigen.
 - `/abui`: Befehlsübersicht anzeigen.
 
-Vor dem Setup den Blizzard-Bearbeitungsmodus schließen. Nach erfolgreicher Einrichtung **`/reload` selbst im Chat eingeben**. Das Addon löst aus der verzögerten Prüfung keinen geschützten Reload aus.
+Vor dem Setup den Blizzard-Bearbeitungsmodus schließen. Nach erfolgreicher Einrichtung erscheint **UI neu laden**. Alternativ `/reload` im Chat eingeben. Ein automatischer Reload während der Einrichtung erfolgt nicht.
 
 ## Änderungen und Entwicklung
 
